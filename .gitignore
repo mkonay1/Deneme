@@ -1,0 +1,7 @@
+# PAT içerir — asla commit edilmemeli
+config.json
+
+__pycache__/
+*.pyc
+.venv/
+venv/

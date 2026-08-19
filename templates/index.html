@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xray Test Otomasyon Aracı</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --panel: #ffffff; --border: #d8dee6;
+    --text: #1c2733; --muted: #5c6b7a; --accent: #0052cc;
+    --accent-dark: #003d99; --green: #1f845a; --red: #c9372c; --amber: #b25d00;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+  header { background: var(--accent); color: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header .conn { font-size: 13px; opacity: .9; }
+  header button { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+  header button:hover { background: rgba(255,255,255,.25); }
+  main { max-width: 1240px; margin: 20px auto; padding: 0 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 18px; }
+  .panel h2 { margin: 0 0 12px; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+  input[type=text], input[type=password], textarea, select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; background: #fff; color: var(--text);
+  }
+  textarea { resize: vertical; min-height: 34px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 6px; color: var(--muted); font-size: 12px; border-bottom: 2px solid var(--border); }
+  td { padding: 5px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.num { color: var(--muted); width: 28px; padding-top: 12px; }
+  td .status { font-size: 12px; white-space: nowrap; padding-top: 8px; display: block; min-width: 90px; }
+  .status.ok { color: var(--green); font-weight: 600; }
+  .status.err { color: var(--red); }
+  .status.busy { color: var(--amber); }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { background: #9db8dd; cursor: not-allowed; }
+  .btn.secondary { background: #eef1f5; color: var(--text); border: 1px solid var(--border); font-weight: 400; }
+  #log { background: #10161d; color: #d7e3f0; border-radius: 8px; padding: 12px 14px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; max-height: 260px; overflow-y: auto; white-space: pre-wrap; display: none; }
+  #log .ok { color: #6cd28f; } #log .err { color: #ff8a80; } #log .warn { color: #ffcf70; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(15,25,35,.55); display: none; align-items: center; justify-content: center; z-index: 50; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 520px; max-width: 94vw; max-height: 92vh; overflow-y: auto; }
+  .modal h2 { margin: 0 0 4px; font-size: 17px; }
+  .modal p.sub { margin: 0 0 16px; font-size: 13px; color: var(--muted); }
+  .modal .field { margin-bottom: 12px; }
+  .modal details { margin: 10px 0; font-size: 13px; }
+  .modal details summary { cursor: pointer; color: var(--muted); }
+  .modal .footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+  .modal .error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+  .check input { width: auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧪 Xray Test Otomasyon Aracı</h1>
+  <div style="display:flex; gap:14px; align-items:center;">
+    <span class="conn" id="connInfo">Bağlı değil</span>
+    <button onclick="openSettings()">⚙️ Ayarlar</button>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <h2>1. Test Senaryoları (en fazla 20 satır)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th style="width:26%">Senaryo Adı *</th>
+          <th style="width:24%">Açıklama</th>
+          <th style="width:34%">Adımlar <span style="font-weight:400">(her satır bir adım, "=&gt;" sonrası beklenen sonuç)</span></th>
+          <th>Durum</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="hint">Örnek adım: <code>Kullanıcı giriş sayfasını açar =&gt; Giriş formu görüntülenir</code></div>
+  </div>
+
+  <div class="panel">
+    <h2>2. Test Set &amp; Execution</h2>
+    <div class="grid">
+      <div>
+        <label>Test Set Adı (yeni oluşturulur)</label>
+        <input type="text" id="testSetName" placeholder="Örn: Regresyon Seti - Sprint 12">
+      </div>
+      <div>
+        <label>veya Mevcut Test Set Key</label>
+        <input type="text" id="testSetKey" placeholder="Örn: PROJ-123 (boşsa yeni oluşturulur)">
+      </div>
+      <div>
+        <label>Test Execution Adı</label>
+        <input type="text" id="execName" placeholder="Örn: Regresyon Koşumu - 19.08.2026">
+      </div>
+      <div>
+        <label>Sonuç Durumu</label>
+        <select id="runStatus">
+          <option value="PASS" selected>PASS</option>
+          <option value="FAIL">FAIL</option>
+          <option value="TODO">TODO (işaretleme)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="actions">
+      <button class="btn" id="runBtn" onclick="runAll()">🚀 Oluştur, Bağla ve PASS'le</button>
+      <button class="btn secondary" onclick="clearRows()">Satırları Temizle</button>
+      <span id="summary" style="font-size:13px; color: var(--muted);"></span>
+    </div>
+    <div style="margin-top:14px;"><div id="log"></div></div>
+  </div>
+</main>
+
+<!-- Ayarlar / İlk kurulum modalı -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <h2 id="modalTitle">Jira / Xray Bağlantı Ayarları</h2>
+    <p class="sub" id="modalSub">Devam etmek için Jira adresinizi ve Personal Access Token (PAT) girin. Bilgiler yalnızca bu makinede <code>config.json</code> dosyasında saklanır.</p>
+    <div class="field">
+      <label>Jira URL *</label>
+      <input type="text" id="cfgUrl" placeholder="https://jira.sirketiniz.com">
+    </div>
+    <div class="field">
+      <label>Personal Access Token (PAT) *</label>
+      <input type="password" id="cfgPat" placeholder="Jira profilinizden oluşturduğunuz PAT" autocomplete="off">
+      <div class="hint" id="patHint" style="display:none">Kayıtlı bir PAT mevcut — değiştirmek istemiyorsanız boş bırakın.</div>
+    </div>
+    <div class="field">
+      <label>Proje Anahtarı (Project Key) *</label>
+      <input type="text" id="cfgProject" placeholder="Örn: PROJ">
+    </div>
+    <details>
+      <summary>Gelişmiş ayarlar (issue tipi adları, SSL)</summary>
+      <div class="field" style="margin-top:10px;">
+        <label>Test Issue Tipi</label>
+        <input type="text" id="cfgTestType" value="Test">
+      </div>
+      <div class="field">
+        <label>Test Set Issue Tipi</label>
+        <input type="text" id="cfgTestSetType" value="Test Set">
+      </div>
+      <div class="field">
+        <label>Test Execution Issue Tipi</label>
+        <input type="text" id="cfgTestExecType" value="Test Execution">
+      </div>
+      <div class="field check">
+        <input type="checkbox" id="cfgSsl" checked>
+        <span>SSL sertifikası doğrula (kurum içi self-signed sertifikada kapatın)</span>
+      </div>
+    </details>
+    <div class="error" id="cfgError"></div>
+    <div class="footer">
+      <button class="btn secondary" id="cfgCancel" onclick="closeSettings()">Vazgeç</button>
+      <button class="btn" id="cfgSave" onclick="saveSettings()">Kaydet ve Bağlan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROWS = 20;
+let configured = false;
+
+// ---- Satırları oluştur ----
+const tbody = document.getElementById('rows');
+for (let i = 0; i < ROWS; i++) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="num">${i + 1}</td>
+    <td><input type="text" data-f="summary" data-i="${i}" placeholder="Senaryo adı"></td>
+    <td><textarea rows="1" data-f="desc" data-i="${i}"></textarea></td>
+    <td><textarea rows="1" data-f="steps" data-i="${i}"></textarea></td>
+    <td><span class="status" id="st-${i}"></span></td>`;
+  tbody.appendChild(tr);
+}
+
+function rowValue(i, f) {
+  return document.querySelector(`[data-f="${f}"][data-i="${i}"]`).value.trim();
+}
+function setStatus(i, text, cls) {
+  const el = document.getElementById('st-' + i);
+  el.textContent = text; el.className = 'status ' + (cls || '');
+}
+function clearRows() {
+  document.querySelectorAll('#rows input, #rows textarea').forEach(e => e.value = '');
+  for (let i = 0; i < ROWS; i++) setStatus(i, '', '');
+  document.getElementById('summary').textContent = '';
+}
+
+// ---- Log ----
+const logEl = document.getElementById('log');
+function log(msg, cls) {
+  logEl.style.display = 'block';
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = new Date().toLocaleTimeString('tr-TR') + '  ' + msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ---- Ayarlar ----
+async function loadConfig() {
+  const r = await fetch('/api/config');
+  const c = await r.json();
+  configured = c.configured;
+  document.getElementById('cfgUrl').value = c.jiraUrl || '';
+  document.getElementById('cfgProject').value = c.projectKey || '';
+  document.getElementById('cfgTestType').value = c.testIssueType || 'Test';
+  document.getElementById('cfgTestSetType').value = c.testSetIssueType || 'Test Set';
+  document.getElementById('cfgTestExecType').value = c.testExecIssueType || 'Test Execution';
+  document.getElementById('cfgSsl').checked = c.verifySsl !== false;
+  document.getElementById('patHint').style.display = c.hasPat ? 'block' : 'none';
+  if (configured) {
+    document.getElementById('connInfo').textContent = `${c.jiraUrl} · ${c.projectKey}`;
+  } else {
+    // İlk açılış: PAT'i sor
+    document.getElementById('modalTitle').textContent = 'Hoş geldiniz — İlk Kurulum';
+    document.getElementById('cfgCancel').style.display = 'none';
+    openSettings();
+  }
+}
+
+function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+
+async function saveSettings() {
+  const err = document.getElementById('cfgError');
+  err.style.display = 'none';
+  const btn = document.getElementById('cfgSave');
+  btn.disabled = true; btn.textContent = 'Bağlanılıyor...';
+  try {
+    const r = await fetch('/api/config', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        jiraUrl: document.getElementById('cfgUrl').value,
+        pat: document.getElementById('cfgPat').value,
+        projectKey: document.getElementById('cfgProject').value,
+        testIssueType: document.getElementById('cfgTestType').value,
+        testSetIssueType: document.getElementById('cfgTestSetType').value,
+        testExecIssueType: document.getElementById('cfgTestExecType').value,
+        verifySsl: document.getElementById('cfgSsl').checked,
+      })
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Kayıt başarısız');
+    configured = true;
+    document.getElementById('cfgPat').value = '';
+    document.getElementById('cfgCancel').style.display = '';
+    closeSettings();
+    document.getElementById('connInfo').textContent =
+      document.getElementById('cfgUrl').value + ' · ' + document.getElementById('cfgProject').value +
+      (d.user ? ' · ' + d.user : '');
+    log('Jira bağlantısı doğrulandı' + (d.user ? ' (' + d.user + ')' : ''), 'ok');
+  } catch (e) {
+    err.textContent = e.message; err.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Kaydet ve Bağlan';
+  }
+}
+
+// ---- Adım metnini parse et ----
+function parseSteps(text) {
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const idx = l.indexOf('=>');
+    if (idx >= 0) return { action: l.slice(0, idx).trim(), expected: l.slice(idx + 2).trim() };
+    return { action: l, expected: '' };
+  });
+}
+
+// ---- Ana akış ----
+async function runAll() {
+  if (!configured) { openSettings(); return; }
+
+  const filled = [];
+  for (let i = 0; i < ROWS; i++) {
+    if (rowValue(i, 'summary')) filled.push(i);
+  }
+  if (!filled.length) { alert('En az bir satıra senaryo adı girin.'); return; }
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  logEl.innerHTML = '';
+  log(`${filled.length} senaryo işlenecek...`);
+
+  const createdKeys = [];
+  try {
+    // 1) Testleri oluştur
+    for (const i of filled) {
+      setStatus(i, '⏳ oluşturuluyor...', 'busy');
+      try {
+        const r = await fetch('/api/tests', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            summary: rowValue(i, 'summary'),
+            description: rowValue(i, 'desc'),
+            steps: parseSteps(rowValue(i, 'steps')),
+          })
+        });
+        const d = await r.json();
+        if (!d.ok) throw new Error(d.error);
+        createdKeys.push(d.key);
+        setStatus(i, '✅ ' + d.key, 'ok');
+        log(`Test oluşturuldu: ${d.key} — ${rowValue(i, 'summary')}`, 'ok');
+        (d.warnings || []).forEach(w => log('Uyarı: ' + w, 'warn'));
+      } catch (e) {
+        setStatus(i, '❌ hata', 'err');
+        log(`Satır ${i + 1} hata: ${e.message}`, 'err');
+      }
+    }
+    if (!createdKeys.length) throw new Error('Hiç test oluşturulamadı, akış durduruldu.');
+
+    // 2) Test Set
+    log('Testler Test Set\'e bağlanıyor...');
+    const tsResp = await fetch('/api/testset', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name: document.getElementById('testSetName').value || 'Test Set - ' + new Date().toLocaleDateString('tr-TR'),
+        existingKey: document.getElementById('testSetKey').value,
+        testKeys: createdKeys,
+      })
+    });
+    const ts = await tsResp.json();
+    if (!ts.ok) throw new Error('Test Set hatası: ' + ts.error);
+    log(`Test Set hazır: ${ts.key} (${createdKeys.length} test bağlandı)`, 'ok');
+
+    // 3) Execution + PASS
+    const status = document.getElementById('runStatus').value;
+    log(`Test Execution oluşturuluyor ve testler ${status} işaretleniyor...`);
+    const exResp = await fetch('/api/execution', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name: document.getElementById('execName').value || 'Test Execution - ' + new Date().toLocaleString('tr-TR'),
+        testKeys: createdKeys,
+        status: status,
+      })
+    });
+    const ex = await exResp.json();
+    if (!ex.ok) throw new Error('Execution hatası: ' + ex.error);
+    (ex.warnings || []).forEach(w => log('Uyarı: ' + w, 'warn'));
+    log(`Test Execution hazır: ${ex.key} — ${createdKeys.length} test ${status}`, 'ok');
+    log('🎉 Tüm akış tamamlandı!', 'ok');
+    document.getElementById('summary').textContent =
+      `Tamamlandı: ${createdKeys.length} test → Test Set ${ts.key} → Execution ${ex.key} (${status})`;
+  } catch (e) {
+    log('AKIŞ DURDU: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+loadConfig();
+</script>
+</body>
+</html>
