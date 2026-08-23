@@ -1,0 +1,63 @@
+XRAY TEST KOSUM PANELI - KURULUM
+=================================
+
+Jira (jira.thy.com) uzerindeki bir Xray test planinin kosum istatistiklerini
+gosteren yerel web paneli. Veriler makinenizden cikmaz; panel yalnizca sizin
+bilgisayarinizda calisir ve dogrudan Jira API'sine baglanir.
+
+GEREKSINIMLER
+-------------
+1. Python 3.9 veya uzeri
+   - Windows: https://www.python.org/downloads/ (kurulumda "Add python.exe
+     to PATH" isaretlenmeli). Sirket bilgisayarinda qkg-haftalik-rapor icin
+     kurulan Python varsa o da kullanilabilir, yeniden kurmaya gerek yok.
+2. Jira PAT (Personal Access Token)
+   - jira.thy.com > sag ustte profil resmi > Profile >
+     Personal Access Tokens > Create token
+3. Kurum agina erisim (ofis agi veya VPN)
+
+CALISTIRMA
+----------
+Windows : calistir.bat dosyasina cift tiklayin.
+macOS   : calistir.command dosyasina cift tiklayin
+          (ilk seferde: sag tik > Open gerekebilir).
+
+Tarayici otomatik olarak http://localhost:8765 adresini acar. Panel ilk
+acilista token ister: acilan pencereye Jira PAT'inizi yapistirip "Baglan"a
+basin. Token yalnizca panel acikken bellekte tutulur, DISKE KAYDEDILMEZ;
+uygulamayi her kapatip actiginizda tekrar sorulur. Sag ustteki durum
+rozetine tiklayarak token'i degistirebilirsiniz.
+
+PPTX CIKTISI (istege bagli)
+---------------------------
+"PPTX indir" dugmesi python-pptx paketini ister. Panel bu paket olmadan da
+calisir (dugme hata mesaji verir).
+
+- Internet varsa   : python -m pip install python-pptx
+- Internet yoksa   : pptx_kur_offline.bat calistirin (wheels klasorundeki
+                     paketleri kurar; wheels Windows 64-bit / Python 3.12
+                     icin indirilmistir).
+
+NOTLAR
+------
+- Token diske yazilmadigi icin klasoru paylasirken sizmaz. Yine de token'i
+  kimseyle paylasmayin; iptal icin: Jira > Profile > Personal Access Tokens >
+  Revoke. (Ileri kullanim: JIRA_TOKEN ortam degiskeni ayarlanirsa panel token
+  sormaz, o degeri kullanir.)
+- Varsayilan test plani TKP3576-29946'dir; panel uzerinden degistirilebilir
+  ve secim tarayicida hatirlanir.
+- Ilk sorgu plani bastan tarar (~1-2 dk). Sonuclar 10 dk onbelleklenir ve
+  panel acikken 10 dakikada bir kendini yeniler.
+- Port degistirmek icin: PORT ortam degiskeni (varsayilan 8765).
+- Farkli Jira icin: JIRA_BASE ortam degiskeni.
+- Deneme icin gercek veriye baglanmadan: http://localhost:8765/?demo=1
+
+DOSYALAR
+--------
+server.py            Yerel sunucu (Jira API koprusu; ek paket gerektirmez)
+index.html           Panel arayuzu
+pptx_report.py       PPTX rapor uretici (python-pptx ister)
+calistir.bat         Windows baslatici
+calistir.command     macOS/Linux baslatici
+pptx_kur_offline.bat python-pptx offline kurulum (Windows)
+wheels/              Offline kurulum paketleri (Win64 / Py3.12)

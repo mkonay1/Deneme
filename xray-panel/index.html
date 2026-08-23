@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xray Test Koşum Paneli</title>
+<style>
+  :root {
+    --page:        #f9f9f7;
+    --surface:     #fcfcfb;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --muted:       #898781;
+    --grid:        #e1e0d9;
+    --baseline:    #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+    --series:      #2a78d6;
+    --pass:        #0ca30c;
+    --fail:        #d03b3b;
+    --other:       #b3b1a9;
+    --good-text:   #006300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page:        #0d0d0d;
+      --surface:     #1a1a19;
+      --ink:         #ffffff;
+      --ink-2:       #c3c2b7;
+      --muted:       #898781;
+      --grid:        #2c2c2a;
+      --baseline:    #383835;
+      --border:      rgba(255,255,255,0.10);
+      --series:      #3987e5;
+      --pass:        #0ca30c;
+      --fail:        #d03b3b;
+      --other:       #55544f;
+      --good-text:   #0ca30c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 28px 20px 48px; }
+
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  h1 { font-size: 20px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--ink-2);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 12px; background: var(--surface);
+  }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+  .chip.ok .dot { background: var(--pass); }
+  .chip.err .dot { background: var(--fail); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+
+  .controls { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; color: var(--ink-2); font-weight: 550; }
+  input, select {
+    font: inherit; color: var(--ink);
+    background: var(--page);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px;
+  }
+  #plan { min-width: 210px; }
+  input:focus, select:focus { outline: 2px solid var(--series); outline-offset: -1px; }
+  button {
+    font: inherit; font-weight: 600;
+    background: var(--series); color: #fff;
+    border: none; border-radius: 8px;
+    padding: 9px 22px; cursor: pointer;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .55; cursor: default; }
+  button.ghost {
+    background: transparent; color: var(--ink-2); font-weight: 550;
+    border: 1px solid var(--border); padding: 6px 14px; font-size: 12px;
+  }
+  .refresh-note { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .tile { margin-bottom: 0; padding: 14px 16px; }
+  .tile .label { font-size: 12px; color: var(--ink-2); font-weight: 550; display: flex; align-items: center; gap: 6px; }
+  .tile .label .dot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+  .tile .value { font-size: 28px; font-weight: 650; margin-top: 2px; letter-spacing: -0.02em; }
+  .tile .note  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .progress-track { height: 6px; border-radius: 3px; background: var(--grid); margin-top: 8px; overflow: hidden; }
+  .progress-fill  { height: 100%; border-radius: 3px; background: var(--series); transition: width .35s ease; }
+
+  .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chart-head h2 { font-size: 14px; font-weight: 650; margin: 0; }
+  .chart-head .meta { font-size: 12px; color: var(--muted); }
+  .head-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+  /* trend */
+  .trend { display: flex; align-items: flex-end; gap: 6px; height: 130px; padding-top: 6px; border-bottom: 2px solid var(--baseline); }
+  .tcol { flex: 1; min-width: 6px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; height: 100%; border-radius: 4px 4px 0 0; }
+  .tcol:hover { background: color-mix(in srgb, var(--series) 10%, transparent); }
+  .tseg { width: 100%; }
+  .tseg.pass  { background: var(--pass); border-radius: 4px 4px 0 0; }
+  .tseg.fail  { background: var(--fail); }
+  .tseg.other { background: var(--other); }
+  .tlabels { display: flex; gap: 6px; margin-top: 6px; }
+  .tlabels span { flex: 1; min-width: 6px; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; overflow: visible; white-space: nowrap; }
+
+  /* kişi barları */
+  .row {
+    display: grid;
+    grid-template-columns: minmax(130px, 220px) 1fr 52px;
+    gap: 12px; align-items: center;
+    padding: 5px 6px; border-radius: 8px;
+  }
+  .row:hover { background: color-mix(in srgb, var(--series) 8%, transparent); }
+  .row .name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .track { position: relative; height: 20px; border-left: 2px solid var(--baseline); display: flex; gap: 2px; align-items: stretch; }
+  .row .seg { min-width: 2px; }
+  .row .seg.pass  { background: var(--pass); }
+  .row .seg.fail  { background: var(--fail); }
+  .row .seg.other { background: var(--other); }
+  .row .seg:last-child { border-radius: 0 4px 4px 0; }
+  .row .num { font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+
+  .erow { grid-template-columns: minmax(150px, 300px) 1fr 118px; }
+  .erow .name a { color: var(--series); text-decoration: none; font-weight: 600; }
+  .erow .name a:hover { text-decoration: underline; }
+  .erow .track { border-left: none; background: var(--grid); border-radius: 4px; overflow: hidden; height: 14px; }
+  .erow .num { white-space: nowrap; }
+  .erow .num .pct { font-weight: 650; }
+  .erow .num .cnt { color: var(--muted); font-size: 12px; }
+
+  .state { padding: 34px 10px; text-align: center; color: var(--ink-2); font-size: 13px; }
+  .state.error { color: var(--fail); }
+  .state .detail { color: var(--muted); font-size: 12px; margin-top: 6px; word-break: break-word; }
+  .spinner {
+    width: 22px; height: 22px; margin: 0 auto 10px;
+    border: 3px solid var(--grid); border-top-color: var(--series);
+    border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tooltip {
+    position: fixed; z-index: 10; pointer-events: none;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 11px; font-size: 12px; line-height: 1.55;
+    box-shadow: 0 4px 14px rgba(0,0,0,.12);
+    display: none; max-width: 260px;
+  }
+  .tooltip b { font-variant-numeric: tabular-nums; }
+  .tooltip .tp { color: var(--good-text); }
+  .tooltip .tf { color: var(--fail); }
+  .tooltip .tt-sub { color: var(--ink-2); }
+
+  footer { margin-top: 18px; font-size: 12px; color: var(--muted); }
+
+  .chip.clickable { cursor: pointer; }
+  .chip.clickable:hover { border-color: var(--series); }
+
+  /* token giris ekrani */
+  .login {
+    position: fixed; inset: 0; z-index: 20;
+    background: color-mix(in srgb, var(--page) 82%, transparent);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 26px 26px 22px; width: 100%; max-width: 420px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.18);
+  }
+  .login-card h2 { font-size: 17px; font-weight: 650; margin: 0 0 6px; }
+  .login-sub { font-size: 12.5px; color: var(--ink-2); margin: 0 0 16px; line-height: 1.55; }
+  .login-card label { display: block; font-size: 12px; color: var(--ink-2); font-weight: 550; margin-bottom: 5px; }
+  .login-card input {
+    width: 100%; font: inherit; color: var(--ink); background: var(--page);
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+  }
+  .login-card input:focus { outline: 2px solid var(--series); outline-offset: -1px; }
+  .login-card button { margin-top: 14px; width: 100%; padding: 10px; }
+  .login-card button:disabled { opacity: .6; cursor: default; }
+  .login-err { margin-top: 12px; font-size: 12.5px; color: var(--fail); display: none; }
+  .login-err.show { display: block; }
+  .login-hint { margin: 14px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="login" id="login" hidden>
+  <div class="login-card">
+    <h2>Jira Bağlantısı</h2>
+    <p class="login-sub">Panel <b>jira.thy.com</b>'a bağlanmak için Personal Access Token (PAT) ister. Token yalnızca bu oturumda bellekte tutulur, diske kaydedilmez — uygulamayı her açtığınızda yeniden istenir.</p>
+    <label for="tokenInput">Personal Access Token</label>
+    <input type="password" id="tokenInput" autocomplete="off" spellcheck="false" placeholder="Token'ı yapıştırın">
+    <div class="login-err" id="loginErr"></div>
+    <button id="tokenGo">Bağlan</button>
+    <p class="login-hint">Token oluşturma: jira.thy.com → sağ üstte profil → Profile → Personal Access Tokens → Create token</p>
+  </div>
+</div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Xray Test Koşum Paneli</h1>
+      <div class="sub">Test planındaki koşumların kişi ve gün bazında dağılımı — jira.thy.com</div>
+    </div>
+    <span class="chip" id="status"><span class="dot"></span><span id="statusText">Bağlantı kontrol ediliyor…</span></span>
+  </header>
+
+  <div class="card controls">
+    <div class="field">
+      <label for="plan">Test Planı</label>
+      <input type="text" id="plan" list="planList" value="TKP3576-29946" spellcheck="false">
+      <datalist id="planList"></datalist>
+    </div>
+    <div class="field">
+      <label for="preset">Aralık</label>
+      <select id="preset">
+        <option value="today">Bugün</option>
+        <option value="yesterday">Dün</option>
+        <option value="7">Son 7 gün</option>
+        <option value="14">Son 14 gün</option>
+        <option value="30">Son 30 gün</option>
+        <option value="custom">Özel…</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="from">Başlangıç</label>
+      <input type="date" id="from">
+    </div>
+    <div class="field">
+      <label for="to">Bitiş</label>
+      <input type="date" id="to">
+    </div>
+    <button id="go">Getir</button>
+    <div class="refresh-note" id="refreshNote"></div>
+  </div>
+
+  <div class="tiles" id="tiles" hidden>
+    <div class="card tile"><div class="label">Toplam Koşum</div><div class="value" id="tTotal">–</div><div class="note" id="tRange"></div></div>
+    <div class="card tile"><div class="label"><span class="dot" style="background:var(--pass)"></span>Başarılı</div><div class="value" id="tPass">–</div><div class="note" id="tPassPct"></div></div>
+    <div class="card tile"><div class="label"><span class="dot" style="background:var(--fail)"></span>Başarısız</div><div class="value" id="tFail">–</div><div class="note" id="tFailPct"></div></div>
+    <div class="card tile"><div class="label">Kişi</div><div class="value" id="tPeople">–</div><div class="note">test koşan</div></div>
+    <div class="card tile">
+      <div class="label">Plan İlerlemesi</div>
+      <div class="value" id="tProg">–</div>
+      <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+      <div class="note" id="tProgNote"></div>
+    </div>
+  </div>
+
+  <div class="card" id="execCard" hidden>
+    <div class="chart-head">
+      <h2>Execution İlerlemesi</h2>
+      <div class="head-right">
+        <div class="legend">
+          <span><span class="sw" style="background:var(--pass)"></span>Başarılı</span>
+          <span><span class="sw" style="background:var(--fail)"></span>Başarısız</span>
+          <span><span class="sw" style="background:var(--other)"></span>Diğer</span>
+          <span><span class="sw" style="background:var(--grid)"></span>Bekleyen</span>
+        </div>
+        <span class="meta">güncel durum — tarih aralığından bağımsız</span>
+      </div>
+    </div>
+    <div id="execList"></div>
+  </div>
+
+  <div class="card" id="trendCard" hidden>
+    <div class="chart-head">
+      <h2>Günlere Göre Koşum</h2>
+      <div class="head-right">
+        <div class="legend">
+          <span><span class="sw" style="background:var(--pass)"></span>Başarılı</span>
+          <span><span class="sw" style="background:var(--fail)"></span>Başarısız</span>
+          <span><span class="sw" style="background:var(--other)"></span>Diğer</span>
+        </div>
+      </div>
+    </div>
+    <div class="trend" id="trend"></div>
+    <div class="tlabels" id="trendLabels"></div>
+  </div>
+
+  <div class="card">
+    <div class="chart-head">
+      <h2>Kişi Bazında Koşum</h2>
+      <div class="head-right">
+        <div class="legend" id="personLegend" hidden>
+          <span><span class="sw" style="background:var(--pass)"></span>Başarılı</span>
+          <span><span class="sw" style="background:var(--fail)"></span>Başarısız</span>
+          <span><span class="sw" style="background:var(--other)"></span>Diğer</span>
+        </div>
+        <button class="ghost" id="csv" hidden>CSV indir</button>
+        <button class="ghost" id="pptx" hidden>PPTX indir</button>
+        <span class="meta" id="chartMeta"></span>
+      </div>
+    </div>
+    <div id="chart">
+      <div class="state">Plan ve aralığı seçip <b>Getir</b>'e basın.</div>
+    </div>
+  </div>
+
+  <footer>Veriler Xray (Raven) REST API'sinden çekilir; yalnızca seçilen aralıkta <i>tamamlanmış</i> koşumlar sayılır. Sonuçlar 10 dk önbelleklenir.</footer>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const demo = new URLSearchParams(location.search).has('demo');
+const AUTO_MS = 10 * 60 * 1000;
+let lastData = null;
+let autoTimer = null;
+
+function isoLocal(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function fmtDate(iso) { return new Date(iso + 'T00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+function fmtShort(iso) { return new Date(iso + 'T00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function applyPreset() {
+  const v = $('preset').value, today = new Date();
+  const custom = v === 'custom';
+  $('from').disabled = $('to').disabled = !custom;
+  if (custom) return;
+  let from = new Date(today), to = new Date(today);
+  if (v === 'yesterday') { from.setDate(from.getDate() - 1); to = new Date(from); }
+  else if (v !== 'today') { from.setDate(from.getDate() - (parseInt(v) - 1)); }
+  $('from').value = isoLocal(from);
+  $('to').value = isoLocal(to);
+}
+$('preset').addEventListener('change', applyPreset);
+applyPreset();
+
+const savedPlan = localStorage.getItem('xray-plan');
+if (savedPlan) $('plan').value = savedPlan;
+
+function showLogin(msg) {
+  const err = $('loginErr');
+  if (msg) { err.textContent = msg; err.classList.add('show'); }
+  else { err.textContent = ''; err.classList.remove('show'); }
+  $('login').hidden = false;
+  const inp = $('tokenInput');
+  inp.value = '';
+  setTimeout(() => inp.focus(), 50);
+}
+function hideLogin() { $('login').hidden = true; }
+
+async function submitToken() {
+  const inp = $('tokenInput'), btn = $('tokenGo'), err = $('loginErr');
+  const token = inp.value.trim();
+  if (!token) { showLogin('Lütfen token girin.'); return; }
+  btn.disabled = true; btn.textContent = 'Bağlanıyor…';
+  err.classList.remove('show');
+  try {
+    const r = await (await fetch('/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })).json();
+    if (r.ok) {
+      hideLogin();
+      await checkStatus();
+      loadPlans();
+    } else if (r.reason === 'auth-failed') {
+      showLogin('Token geçersiz veya süresi dolmuş' + (r.detail ? ' (' + r.detail + ')' : '') + '.');
+    } else if (r.reason === 'network') {
+      showLogin('Jira\'ya ulaşılamadı. Kurum ağında/VPN\'de olduğunuzdan emin olun.' + (r.detail ? '\n' + r.detail : ''));
+    } else {
+      showLogin('Token kaydedilemedi.');
+    }
+  } catch (e) {
+    showLogin('İstek başarısız: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Bağlan';
+  }
+}
+$('tokenGo').addEventListener('click', submitToken);
+$('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitToken(); });
+
+async function checkStatus() {
+  const chip = $('status'), txt = $('statusText');
+  if (demo) { chip.className = 'chip ok'; txt.textContent = 'Demo modu'; return; }
+  try {
+    const s = await (await fetch('/api/status')).json();
+    if (s.ok) {
+      chip.className = 'chip ok clickable';
+      chip.title = 'Token değiştir';
+      txt.textContent = s.user;
+    } else if (s.reason === 'token-missing') {
+      chip.className = 'chip err clickable';
+      chip.title = 'Token gir';
+      txt.textContent = 'Token gerekli';
+      showLogin();
+    } else {
+      chip.className = 'chip err clickable';
+      chip.title = 'Token gir';
+      txt.textContent = 'Bağlantı hatası' + (s.detail ? ' · ' + s.detail : '');
+      showLogin(s.reason === 'auth-failed' ? 'Kayıtlı token geçersiz. Lütfen yeniden girin.' : null);
+    }
+  } catch { chip.className = 'chip err'; txt.textContent = 'Sunucuya ulaşılamıyor'; }
+}
+$('status').addEventListener('click', () => { if (!demo) showLogin(); });
+
+async function loadPlans() {
+  if (demo) return;
+  const project = ($('plan').value.trim().split('-')[0] || 'TKP3576');
+  try {
+    const r = await (await fetch('/api/plans?project=' + encodeURIComponent(project))).json();
+    if (r.plans) {
+      $('planList').innerHTML = r.plans.map(p =>
+        `<option value="${esc(p.key)}">${esc(p.summary)}</option>`).join('');
+    }
+  } catch {}
+}
+
+const tt = $('tooltip');
+function showTip(e, html) {
+  tt.innerHTML = html;
+  tt.style.display = 'block';
+  tt.style.left = Math.min(e.clientX + 14, innerWidth - tt.offsetWidth - 8) + 'px';
+  tt.style.top = Math.min(e.clientY + 14, innerHeight - tt.offsetHeight - 8) + 'px';
+}
+function hideTip() { tt.style.display = 'none'; }
+
+function statusTipRows(o) {
+  return `<span class="tp">Başarılı: <b>${o.pass}</b></span><br>` +
+         `<span class="tf">Başarısız: <b>${o.fail}</b></span>` +
+         (o.other ? `<br><span class="tt-sub">Diğer: <b>${o.other}</b></span>` : '');
+}
+
+function render(data) {
+  lastData = data;
+  const singleDay = data.from === data.to;
+  const rangeText = singleDay ? fmtDate(data.from) : fmtDate(data.from) + ' – ' + fmtDate(data.to);
+
+  // kartlar
+  $('tiles').hidden = false;
+  $('tTotal').textContent = data.total;
+  $('tRange').textContent = data.executions + ' execution tarandı';
+  $('tPass').textContent = data.passCount;
+  $('tPassPct').textContent = data.total ? '%' + Math.round(data.passCount / data.total * 100) : '';
+  $('tFail').textContent = data.failCount;
+  $('tFailPct').textContent = data.total ? '%' + Math.round(data.failCount / data.total * 100) : '';
+  $('tPeople').textContent = data.people.length;
+
+  const pr = data.progress;
+  if (pr && pr.total) {
+    const pct = Math.round(pr.done / pr.total * 100);
+    $('tProg').textContent = '%' + pct;
+    $('progFill').style.width = pct + '%';
+    $('tProgNote').textContent = pr.done + '/' + pr.total + ' test'
+      + (pr.remaining ? ' · kalan ' + pr.remaining : '')
+      + (pr.estimateDays ? ' · bu tempoyla ~' + pr.estimateDays + ' gün' : '');
+  } else {
+    $('tProg').textContent = '–';
+    $('progFill').style.width = '0%';
+    $('tProgNote').textContent = 'plan testi bulunamadı';
+  }
+
+  // execution ilerlemesi
+  const execs = data.execProgress || [];
+  $('execCard').hidden = !execs.length;
+  if (execs.length) {
+    $('execList').innerHTML = execs.map((e, i) => {
+      const w = cls => e.total ? (e[cls] / e.total * 100).toFixed(1) : 0;
+      const pct = e.total ? Math.round(e.done / e.total * 100) : 0;
+      return `<div class="row erow" data-i="${i}">
+        <div class="name" title="${esc(e.summary || e.key)}">
+          <a href="https://jira.thy.com/browse/${esc(e.key)}" target="_blank" rel="noopener">${esc(e.key)}</a>
+          ${e.summary ? ' · ' + esc(e.summary) : ''}
+        </div>
+        <div class="track">
+          ${e.pass ? `<div class="seg pass" style="width:${w('pass')}%"></div>` : ''}
+          ${e.fail ? `<div class="seg fail" style="width:${w('fail')}%"></div>` : ''}
+          ${e.other ? `<div class="seg other" style="width:${w('other')}%"></div>` : ''}
+        </div>
+        <div class="num"><span class="pct">%${pct}</span> <span class="cnt">· ${e.done}/${e.total}</span></div>
+      </div>`;
+    }).join('');
+    $('execList').querySelectorAll('.erow').forEach(row => {
+      const e = execs[+row.dataset.i];
+      row.addEventListener('mousemove', ev =>
+        showTip(ev, `<b>${esc(e.key)}</b>${e.summary ? '<br>' + esc(e.summary) : ''}<br>` +
+          `Koşulan: <b>${e.done}</b>/${e.total}<br>${statusTipRows(e)}` +
+          `<br><span class="tt-sub">Bekleyen: <b>${e.todo}</b></span>`));
+      row.addEventListener('mouseleave', hideTip);
+    });
+  }
+
+  // trend (tek günde gizli)
+  $('trendCard').hidden = singleDay;
+  if (!singleDay) {
+    const max = Math.max(1, ...data.days.map(d => d.total));
+    $('trend').innerHTML = data.days.map((d, i) => {
+      const h = cls => (d[cls] / max * 100).toFixed(1);
+      return `<div class="tcol" data-i="${i}">
+        ${d.other ? `<div class="tseg other" style="height:${h('other')}%"></div>` : ''}
+        ${d.fail ? `<div class="tseg fail" style="height:${h('fail')}%"></div>` : ''}
+        ${d.pass ? `<div class="tseg pass" style="height:${h('pass')}%"></div>` : ''}
+      </div>`;
+    }).join('');
+    const n = data.days.length, step = Math.ceil(n / 12);
+    $('trendLabels').innerHTML = data.days.map((d, i) =>
+      `<span>${(i % step === 0 || i === n - 1) ? fmtShort(d.date) : ''}</span>`).join('');
+    $('trend').querySelectorAll('.tcol').forEach(col => {
+      const d = data.days[+col.dataset.i];
+      col.addEventListener('mousemove', e =>
+        showTip(e, `${fmtDate(d.date)}<br><b>${d.total}</b> koşum<br>${statusTipRows(d)}`));
+      col.addEventListener('mouseleave', hideTip);
+    });
+  }
+
+  // kişi barları
+  $('chartMeta').textContent = data.plan + ' · ' + (singleDay ? rangeText : fmtShort(data.from) + ' – ' + fmtShort(data.to));
+  $('csv').hidden = false;
+  $('pptx').hidden = false;
+  $('personLegend').hidden = false;
+  const chart = $('chart');
+  if (!data.people.length) {
+    chart.innerHTML = '<div class="state">Bu aralıkta tamamlanmış koşum bulunamadı.</div>';
+    $('csv').hidden = true;
+    return;
+  }
+  const maxP = data.people[0].total;
+  chart.innerHTML = data.people.map((p, i) => {
+    const w = cls => (p[cls] / maxP * 100).toFixed(1);
+    return `<div class="row" data-i="${i}">
+      <div class="name" title="${esc(p.name)}">${esc(p.name)}</div>
+      <div class="track">
+        ${p.pass ? `<div class="seg pass" style="width:${w('pass')}%"></div>` : ''}
+        ${p.fail ? `<div class="seg fail" style="width:${w('fail')}%"></div>` : ''}
+        ${p.other ? `<div class="seg other" style="width:${w('other')}%"></div>` : ''}
+      </div>
+      <div class="num">${p.total}</div>
+    </div>`;
+  }).join('');
+  chart.querySelectorAll('.row').forEach(row => {
+    const p = data.people[+row.dataset.i];
+    row.addEventListener('mousemove', e =>
+      showTip(e, `${esc(p.name)}<br><b>${p.total}</b> koşum <span class="tt-sub">· %${Math.round(p.total / data.total * 100)}</span><br>${statusTipRows(p)}`));
+    row.addEventListener('mouseleave', hideTip);
+  });
+}
+
+function scheduleAuto() {
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => load({ silent: true, refresh: true }), AUTO_MS);
+}
+
+async function load(opts = {}) {
+  const plan = $('plan').value.trim();
+  if (!plan) return;
+  localStorage.setItem('xray-plan', plan);
+  $('go').disabled = true;
+  if (!opts.silent) {
+    $('chart').innerHTML = '<div class="state"><div class="spinner"></div>Execution\'lar taranıyor… (plan büyükse 1-2 dk sürebilir)</div>';
+  } else {
+    $('refreshNote').textContent = 'Arka planda yenileniyor…';
+  }
+  try {
+    const qs = new URLSearchParams({ plan, from: $('from').value, to: $('to').value });
+    if (demo) qs.set('demo', '1');
+    if (opts.refresh) qs.set('refresh', '1');
+    const resp = await fetch('/api/runs?' + qs);
+    const data = await resp.json();
+    if (!resp.ok) {
+      if (!opts.silent) {
+        $('chart').innerHTML = `<div class="state error">${esc(data.error || 'Hata')}${data.detail ? `<div class="detail">${esc(data.detail)}</div>` : ''}</div>`;
+      }
+      return;
+    }
+    render(data);
+    $('refreshNote').textContent = 'Son güncelleme: ' + data.generatedAt
+      + (data.cached ? ' (önbellekten)' : '') + ' · 10 dk\'da bir otomatik yenilenir';
+    scheduleAuto();
+  } catch (e) {
+    if (!opts.silent) $('chart').innerHTML = `<div class="state error">İstek başarısız: ${esc(e.message)}</div>`;
+    else $('refreshNote').textContent = 'Otomatik yenileme başarısız — tekrar denenecek';
+  } finally {
+    $('go').disabled = false;
+    if (opts.silent) scheduleAuto();
+  }
+}
+
+$('csv').addEventListener('click', () => {
+  if (!lastData) return;
+  const rows = [['Kişi', 'Toplam', 'Başarılı', 'Başarısız', 'Diğer']];
+  lastData.people.forEach(p => rows.push([p.name, p.total, p.pass, p.fail, p.other]));
+  rows.push([]);
+  rows.push(['Tarih', 'Toplam', 'Başarılı', 'Başarısız', 'Diğer']);
+  lastData.days.forEach(d => rows.push([d.date, d.total, d.pass, d.fail, d.other]));
+  if (lastData.execProgress && lastData.execProgress.length) {
+    rows.push([]);
+    rows.push(['Execution', 'Özet', 'Toplam Test', 'Koşulan', 'Başarılı', 'Başarısız', 'Diğer', 'Bekleyen', 'İlerleme %']);
+    lastData.execProgress.forEach(e => rows.push([
+      e.key, e.summary, e.total, e.done, e.pass, e.fail, e.other, e.todo,
+      e.total ? Math.round(e.done / e.total * 100) : 0,
+    ]));
+  }
+  const csv = '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `xray-${lastData.plan}-${lastData.from}_${lastData.to}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$('pptx').addEventListener('click', () => {
+  if (!lastData) return;
+  const qs = new URLSearchParams({ plan: lastData.plan, from: lastData.from, to: lastData.to });
+  if (demo) qs.set('demo', '1');
+  location.href = '/api/report.pptx?' + qs;
+});
+
+$('go').addEventListener('click', () => load());
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.controls')) load(); });
+checkStatus();
+loadPlans();
+if (demo) load();
+</script>
+</body>
+</html>
