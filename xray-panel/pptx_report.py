@@ -29,6 +29,33 @@ BLUE   = RGBColor(0x1F, 0x6F, 0xD6)
 HEAD_FONT = "Georgia"
 BODY_FONT = "Calibri"
 
+ORANGE  = RGBColor(0xE6, 0x7E, 0x22)
+AMBER   = RGBColor(0xF2, 0xA9, 0x2B)
+AQUA    = RGBColor(0x1B, 0xAF, 0x7A)
+PURPLE  = RGBColor(0x6A, 0x2C, 0x91)
+MAGENTA = RGBColor(0xE8, 0x7B, 0xA4)
+
+STATUS_RGB = {
+    "PASS": GREEN, "FAIL": RED, "TODO": GREY,
+    "EXECUTING": BLUE, "ABORTED": ORANGE, "BLOCKED": AMBER,
+}
+FALLBACK_RGB = [AQUA, PURPLE, MAGENTA, RGBColor(0xD9, 0x59, 0x26), RGBColor(0xC9, 0x85, 0x00)]
+
+
+def status_color_map(status_list):
+    out, i = {}, 0
+    for s in status_list:
+        if s in STATUS_RGB:
+            out[s] = STATUS_RGB[s]
+        else:
+            out[s] = FALLBACK_RGB[i % len(FALLBACK_RGB)]
+            i += 1
+    return out
+
+
+def _blend(c1, c2, t):
+    return RGBColor(*(int(a + (b - a) * t) for a, b in zip(c1, c2)))
+
 
 def _text(slide, x, y, w, h, s, size, color, *, bold=False,
           align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, font=BODY_FONT):
@@ -126,6 +153,9 @@ def build_pptx(data: dict) -> bytes:
     right_x, right_w = 7.34, 5.44
     people = data["people"][:10]
 
+    status_list = data.get("statusList") or []
+    cmap = status_color_map(status_list)
+
     _tile(slide, left_x, cy, left_w, ch)
     _text(slide, left_x + 0.22, cy + 0.16, left_w - 0.44, 0.3, "Kişi Bazında Koşum", 13, DARKTX, bold=True)
     if people:
@@ -134,13 +164,19 @@ def build_pptx(data: dict) -> bytes:
             base = name.split(" - ")[0].split(" (")[0].title().strip()
             return base[:30] + "…" if len(base) > 31 else base
         cd.categories = [short(p["name"]) for p in reversed(people)]
-        cd.add_series("Başarılı", [p["pass"] for p in reversed(people)])
-        cd.add_series("Başarısız", [p["fail"] for p in reversed(people)])
-        cd.add_series("Diğer", [p["other"] for p in reversed(people)])
+        if status_list:
+            for s in status_list:
+                cd.add_series(s, [p.get("statuses", {}).get(s, 0) for p in reversed(people)])
+            series_colors = [cmap[s] for s in status_list]
+        else:
+            cd.add_series("Başarılı", [p["pass"] for p in reversed(people)])
+            cd.add_series("Başarısız", [p["fail"] for p in reversed(people)])
+            cd.add_series("Diğer", [p["other"] for p in reversed(people)])
+            series_colors = [GREEN, RED, GREY]
         gf = slide.shapes.add_chart(
             XL_CHART_TYPE.BAR_STACKED,
             Inches(left_x + 0.15), Inches(cy + 0.5), Inches(left_w - 0.3), Inches(ch - 0.68), cd)
-        _style_chart(gf.chart, [GREEN, RED, GREY])
+        _style_chart(gf.chart, series_colors)
     else:
         _text(slide, left_x + 0.22, cy + 1.8, left_w - 0.44, 0.4, "Bu aralıkta koşum yok", 12, GREY,
               align=PP_ALIGN.CENTER)
@@ -151,13 +187,21 @@ def build_pptx(data: dict) -> bytes:
         if total:
             cd = CategoryChartData()
             cats, vals, colors = [], [], []
-            for label, key, color in (("Başarılı", "passCount", GREEN),
-                                      ("Başarısız", "failCount", RED),
-                                      ("Diğer", "otherCount", GREY)):
-                if data[key]:
-                    cats.append(label)
-                    vals.append(data[key])
-                    colors.append(color)
+            if status_list:
+                st_totals = data.get("statusTotals") or {}
+                for s in status_list:
+                    if st_totals.get(s):
+                        cats.append(s)
+                        vals.append(st_totals[s])
+                        colors.append(cmap[s])
+            else:
+                for label, key, color in (("Başarılı", "passCount", GREEN),
+                                          ("Başarısız", "failCount", RED),
+                                          ("Diğer", "otherCount", GREY)):
+                    if data[key]:
+                        cats.append(label)
+                        vals.append(data[key])
+                        colors.append(color)
             cd.categories = cats
             cd.add_series("Koşum", vals)
             gf = slide.shapes.add_chart(
@@ -183,18 +227,104 @@ def build_pptx(data: dict) -> bytes:
         days = data["days"]
         cd = CategoryChartData()
         cd.categories = [_fmt_tr(d["date"]) for d in days]
-        cd.add_series("Başarılı", [d["pass"] for d in days])
-        cd.add_series("Başarısız", [d["fail"] for d in days])
-        cd.add_series("Diğer", [d["other"] for d in days])
+        if status_list:
+            for s in status_list:
+                cd.add_series(s, [d.get("statuses", {}).get(s, 0) for d in days])
+            series_colors = [cmap[s] for s in status_list]
+        else:
+            cd.add_series("Başarılı", [d["pass"] for d in days])
+            cd.add_series("Başarısız", [d["fail"] for d in days])
+            cd.add_series("Diğer", [d["other"] for d in days])
+            series_colors = [GREEN, RED, GREY]
         gf = slide.shapes.add_chart(
             XL_CHART_TYPE.COLUMN_STACKED,
             Inches(right_x + 0.15), Inches(cy + 0.5), Inches(right_w - 0.3), Inches(ch - 0.68), cd)
-        _style_chart(gf.chart, [GREEN, RED, GREY])
+        _style_chart(gf.chart, series_colors)
 
     _text(slide, 0.55, 7.12, 12.2, 0.25,
           "Kaynak: jira.thy.com · Xray (Raven) REST API · yalnızca seçilen aralıkta tamamlanmış koşumlar sayılmıştır",
           8, GREY)
 
+    _matrix_slide(prs, data, range_text)
+
     buf = BytesIO()
     prs.save(buf)
     return buf.getvalue()
+
+
+def _matrix_slide(prs, data: dict, range_text: str):
+    """Kisi x gun kosum matrisi — ayri slaytta tablo olarak."""
+    pds = data.get("personDays") or []
+    day_list = data.get("days") or []
+    if not pds or len(day_list) < 2:
+        return
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    bg = slide.background.fill
+    bg.solid()
+    bg.fore_color.rgb = PAGEBG
+
+    _text(slide, 0.55, 0.32, 9.5, 0.5, "Kişi × Gün Koşum", 22, NAVY, bold=True, font=HEAD_FONT)
+    _text(slide, 0.55, 0.85, 12.0, 0.3, f'{data["plan"]} · {range_text}', 11, GREY)
+
+    n_rows = len(pds) + 1
+    n_cols = len(day_list) + 2
+    x, y, w = 0.55, 1.35, 12.23
+    row_h = min(0.34, 5.6 / n_rows)
+    tbl_h = row_h * n_rows
+    shape = slide.shapes.add_table(n_rows, n_cols, Inches(x), Inches(y), Inches(w), Inches(tbl_h))
+    tbl = shape.table
+    tbl.first_row = False
+    tbl.horz_banding = False
+
+    name_w, tot_w = 2.8, 0.75
+    day_w = (w - name_w - tot_w) / len(day_list)
+    tbl.columns[0].width = Inches(name_w)
+    for i in range(len(day_list)):
+        tbl.columns[i + 1].width = Inches(day_w)
+    tbl.columns[n_cols - 1].width = Inches(tot_w)
+
+    max_cell = max((d["total"] for p in pds for d in p["days"]), default=1) or 1
+    font_size = 9 if len(day_list) <= 16 else 7.5
+
+    def cell(r, c, text, *, fill, color, bold=False, align=PP_ALIGN.CENTER):
+        tc = tbl.cell(r, c)
+        tc.fill.solid()
+        tc.fill.fore_color.rgb = fill
+        tc.margin_left = tc.margin_right = Emu(18000)
+        tc.margin_top = tc.margin_bottom = Emu(0)
+        tf = tc.text_frame
+        tf.word_wrap = False
+        p = tf.paragraphs[0]
+        p.alignment = align
+        r_ = p.add_run()
+        r_.text = text
+        r_.font.size = Pt(font_size)
+        r_.font.bold = bold
+        r_.font.name = BODY_FONT
+        r_.font.color.rgb = color
+
+    cell(0, 0, "Kişi", fill=TILE, color=GREY, bold=True, align=PP_ALIGN.LEFT)
+    for j, d in enumerate(day_list):
+        cell(0, j + 1, _fmt_tr(d["date"]), fill=TILE, color=GREY, bold=True)
+    cell(0, n_cols - 1, "Toplam", fill=TILE, color=GREY, bold=True)
+
+    for i, p in enumerate(pds):
+        name = p["name"].split(" - ")[0].split(" (")[0].title().strip()
+        cell(i + 1, 0, name[:34], fill=TILE, color=DARKTX, align=PP_ALIGN.LEFT)
+        row_total = 0
+        for j, d in enumerate(p["days"]):
+            n = d["total"]
+            row_total += n
+            t = n / max_cell if n else 0.0
+            fill = _blend(TILE, BLUE, 0.12 + 0.78 * t) if n else TILE
+            txt_color = TILE if t > 0.5 else DARKTX
+            cell(i + 1, j + 1, str(n) if n else "·", fill=fill,
+                 color=txt_color if n else GREY)
+        cell(i + 1, n_cols - 1, str(row_total), fill=TILE, color=DARKTX, bold=True)
+
+    for r in range(n_rows):
+        tbl.rows[r].height = Inches(row_h)
+
+    _text(slide, 0.55, y + tbl_h + 0.18, 12.2, 0.25,
+          "Hücre değeri: o gün tamamlanan koşum sayısı · koyuluk yoğunluğu gösterir",
+          8, GREY)

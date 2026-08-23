@@ -37,6 +37,7 @@
       --good-text:   #0ca30c;
     }
   }
+  :root { color-scheme: light dark; }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -79,6 +80,8 @@
   }
   #plan { min-width: 210px; }
   input:focus, select:focus { outline: 2px solid var(--series); outline-offset: -1px; }
+  input:disabled { opacity: .45; cursor: not-allowed; }
+  input[type="date"]:not(:disabled) { cursor: pointer; }
   button {
     font: inherit; font-weight: 600;
     background: var(--series); color: #fff;
@@ -116,9 +119,7 @@
   .tcol { flex: 1; min-width: 6px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; height: 100%; border-radius: 4px 4px 0 0; }
   .tcol:hover { background: color-mix(in srgb, var(--series) 10%, transparent); }
   .tseg { width: 100%; }
-  .tseg.pass  { background: var(--pass); border-radius: 4px 4px 0 0; }
-  .tseg.fail  { background: var(--fail); }
-  .tseg.other { background: var(--other); }
+  .tcol .tseg:first-child { border-radius: 4px 4px 0 0; }
   .tlabels { display: flex; gap: 6px; margin-top: 6px; }
   .tlabels span { flex: 1; min-width: 6px; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; overflow: visible; white-space: nowrap; }
 
@@ -146,6 +147,71 @@
   .erow .num { white-space: nowrap; }
   .erow .num .pct { font-weight: 650; }
   .erow .num .cnt { color: var(--muted); font-size: 12px; }
+
+  /* kişi × gün matrisi */
+  .matrix-scroll { overflow-x: auto; }
+  .matrix { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  .matrix th, .matrix td { padding: 4px 6px; font-size: 12px; text-align: center; min-width: 34px; }
+  .matrix th { color: var(--muted); font-weight: 550; white-space: nowrap; }
+  .matrix td.name { text-align: left; color: var(--ink); max-width: 210px;
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .matrix td.cell { border-radius: 5px; color: var(--ink); cursor: default; }
+  .matrix td.cell.z { color: var(--muted); }
+  .matrix tr:hover td { background-color: color-mix(in srgb, var(--series) 7%, transparent); }
+  .matrix td.rowtot { color: var(--ink-2); font-weight: 600; }
+
+  .fbtn {
+    cursor: pointer; padding: 3px 10px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--ink-2); font-size: 12px;
+    user-select: none;
+  }
+  .fbtn:hover { border-color: var(--series); }
+  .fbtn.active { background: color-mix(in srgb, var(--series) 16%, transparent); border-color: var(--series); color: var(--ink); font-weight: 600; }
+
+  /* görünüm sekmeleri: koşum / bug analizi */
+  .viewtabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .fbtn.vtab { font-size: 13px; padding: 7px 16px; }
+  body[data-view="run"] .grp-bug, body[data-view="run"] .grp-stock { display: none; }
+  body[data-view="bug"] .grp-run, body[data-view="bug"] .grp-stock { display: none; }
+  body[data-view="stock"] .grp-run, body[data-view="stock"] .grp-bug { display: none; }
+
+  /* kişi × execution akordeonu */
+  .pe-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 8px 8px; border-radius: 8px; cursor: pointer; user-select: none;
+  }
+  .pe-head:hover { background: color-mix(in srgb, var(--series) 8%, transparent); }
+  .pe-head .pname { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .pe-head .arrow { color: var(--muted); font-size: 11px; transition: transform .15s; display: inline-block; }
+  .pe-person.open .arrow { transform: rotate(90deg); }
+  .pe-head .psum { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pe-body { display: none; padding: 2px 8px 10px 26px; }
+  .pe-person.open .pe-body { display: block; }
+  .pe-row .track { background: transparent; border-radius: 0; overflow: visible;
+                   border-left: 2px solid var(--baseline); height: 15px; }
+
+  /* bug retest takibi */
+  .bw-row { grid-template-columns: minmax(150px, 300px) 1fr 160px; }
+  .bw-chip {
+    display: inline-block; border: 1px solid var(--border); border-radius: 999px;
+    padding: 1px 9px; font-size: 11.5px; color: var(--ink-2); margin: 1px 4px 1px 0;
+    white-space: nowrap;
+  }
+  .bw-chip b { color: var(--ink); }
+  .bw-chip.done { border-color: color-mix(in srgb, var(--series) 55%, transparent);
+                  background: color-mix(in srgb, var(--series) 10%, transparent); }
+  .bw-lbl { font-size: 11px; color: var(--muted); }
+  .bw-row { align-items: start; }
+  .bw-row .num { padding-top: 3px; }
+
+  /* otomatik analiz */
+  .insights { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .insights li { font-size: 13px; line-height: 1.55; color: var(--ink-2); display: flex; gap: 9px; }
+  .insights li .ic { flex: none; }
+  .insights li b { color: var(--ink); }
+  .insights li.warn { color: var(--ink); background: color-mix(in srgb, #eda100 9%, transparent);
+                      border: 1px solid color-mix(in srgb, #eda100 35%, transparent);
+                      border-radius: 8px; padding: 7px 10px; }
 
   .state { padding: 34px 10px; text-align: center; color: var(--ink-2); font-size: 13px; }
   .state.error { color: var(--fail); }
@@ -177,7 +243,7 @@
 
   /* token giris ekrani */
   .login {
-    position: fixed; inset: 0; z-index: 20;
+    position: fixed; inset: 0; z-index: 40;
     background: color-mix(in srgb, var(--page) 82%, transparent);
     backdrop-filter: blur(3px);
     display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -197,7 +263,7 @@
   .login-card input:focus { outline: 2px solid var(--series); outline-offset: -1px; }
   .login-card button { margin-top: 14px; width: 100%; padding: 10px; }
   .login-card button:disabled { opacity: .6; cursor: default; }
-  .login-err { margin-top: 12px; font-size: 12.5px; color: var(--fail); display: none; }
+  .login-err { margin-top: 12px; font-size: 12.5px; color: var(--fail); display: none; white-space: pre-line; }
   .login-err.show { display: block; }
   .login-hint { margin: 14px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 </style>
@@ -225,8 +291,9 @@
 
   <div class="card controls">
     <div class="field">
-      <label for="plan">Test Planı</label>
-      <input type="text" id="plan" list="planList" value="TKP3576-29946" spellcheck="false">
+      <label for="plan">Test Planı / Proje <span style="color:var(--muted);font-weight:400">(virgülle birden fazla; proje key'i yazılırsa projedeki tüm execution'lar taranır)</span></label>
+      <input type="text" id="plan" list="planList" value="TKP3576-29946" spellcheck="false"
+             placeholder="TKP3576-29946, DIJITALTP">
       <datalist id="planList"></datalist>
     </div>
     <div class="field">
@@ -242,21 +309,32 @@
     </div>
     <div class="field">
       <label for="from">Başlangıç</label>
-      <input type="date" id="from">
+      <input type="text" id="from" placeholder="gg.aa.yyyy" inputmode="numeric" maxlength="10" style="min-width:110px;width:120px">
     </div>
     <div class="field">
       <label for="to">Bitiş</label>
-      <input type="date" id="to">
+      <input type="text" id="to" placeholder="gg.aa.yyyy" inputmode="numeric" maxlength="10" style="min-width:110px;width:120px">
     </div>
     <button id="go">Getir</button>
+    <button class="ghost" id="fullScan" title="Önbelleği yok sayıp tüm execution'ları baştan tarar">Tam tarama</button>
     <div class="refresh-note" id="refreshNote"></div>
   </div>
 
-  <div class="tiles" id="tiles" hidden>
+  <div class="viewtabs" id="viewTabs" hidden>
+    <span class="fbtn vtab" data-v="run">🧪 Test Koşumları</span>
+    <span class="fbtn vtab" data-v="bug">🐞 Bug Analizi</span>
+    <span class="fbtn vtab" data-v="stock">📋 Açık Bug Stoku</span>
+  </div>
+
+  <div class="tiles grp-run" id="tiles" hidden>
     <div class="card tile"><div class="label">Toplam Koşum</div><div class="value" id="tTotal">–</div><div class="note" id="tRange"></div></div>
     <div class="card tile"><div class="label"><span class="dot" style="background:var(--pass)"></span>Başarılı</div><div class="value" id="tPass">–</div><div class="note" id="tPassPct"></div></div>
     <div class="card tile"><div class="label"><span class="dot" style="background:var(--fail)"></span>Başarısız</div><div class="value" id="tFail">–</div><div class="note" id="tFailPct"></div></div>
+    <div id="statusTiles" style="display:contents"></div>
     <div class="card tile"><div class="label">Kişi</div><div class="value" id="tPeople">–</div><div class="note">test koşan</div></div>
+    <div class="card tile"><div class="label">Günlük Ortalama</div><div class="value" id="tAvg">–</div><div class="note" id="tAvgNote"></div></div>
+    <div class="card tile"><div class="label">En Yoğun Gün</div><div class="value" id="tPeak">–</div><div class="note" id="tPeakNote"></div></div>
+    <div class="card tile"><div class="label"><span class="dot" style="background:var(--fail)"></span>Açılan Bug</div><div class="value" id="tBugs">–</div><div class="note">seçilen aralıkta</div></div>
     <div class="card tile">
       <div class="label">Plan İlerlemesi</div>
       <div class="value" id="tProg">–</div>
@@ -265,7 +343,23 @@
     </div>
   </div>
 
-  <div class="card" id="execCard" hidden>
+  <div class="card" id="insightCard" hidden>
+    <div class="chart-head">
+      <h2>Otomatik Analiz</h2>
+      <span class="meta" id="insightMeta"></span>
+    </div>
+    <ul class="insights" id="insightList"></ul>
+  </div>
+
+  <div class="card grp-run" id="planCard" hidden>
+    <div class="chart-head">
+      <h2>Plan Bazında İlerleme</h2>
+      <span class="meta">koşulmuş / toplam test — güncel durum</span>
+    </div>
+    <div id="planList2"></div>
+  </div>
+
+  <div class="card grp-run" id="execCard" hidden>
     <div class="chart-head">
       <h2>Execution İlerlemesi</h2>
       <div class="head-right">
@@ -281,30 +375,59 @@
     <div id="execList"></div>
   </div>
 
-  <div class="card" id="trendCard" hidden>
+  <div class="card grp-run" id="trendCard" hidden>
     <div class="chart-head">
       <h2>Günlere Göre Koşum</h2>
       <div class="head-right">
-        <div class="legend">
-          <span><span class="sw" style="background:var(--pass)"></span>Başarılı</span>
-          <span><span class="sw" style="background:var(--fail)"></span>Başarısız</span>
-          <span><span class="sw" style="background:var(--other)"></span>Diğer</span>
-        </div>
+        <div class="legend" id="legendTrend"></div>
       </div>
     </div>
     <div class="trend" id="trend"></div>
     <div class="tlabels" id="trendLabels"></div>
   </div>
 
-  <div class="card">
+  <div class="card grp-run" id="matrixCard" hidden>
+    <div class="chart-head">
+      <h2>Kişi × Gün Isı Haritası</h2>
+      <div class="head-right">
+        <div class="legend" id="matrixFilter"></div>
+        <span class="meta">hücre üzerine gelince statü kırılımı</span>
+      </div>
+    </div>
+    <div class="matrix-scroll"><table class="matrix" id="matrix"></table></div>
+  </div>
+
+  <div class="card grp-run" id="hourCard" hidden>
+    <div class="chart-head">
+      <h2>Saatlik Isı Haritası</h2>
+      <span class="meta">seçilen aralıkta, günün saatine göre koşum</span>
+    </div>
+    <div class="matrix-scroll"><table class="matrix" id="hourMatrix"></table></div>
+  </div>
+
+  <div class="card grp-bug" id="bugCard" hidden>
+    <div class="chart-head">
+      <h2>Açılan Bug — Kişi × Gün</h2>
+      <span class="meta" id="bugMeta">Bug tipindeki kayıtlar, reporter bazında</span>
+    </div>
+    <div class="matrix-scroll"><table class="matrix" id="bugMatrix"></table></div>
+    <div class="state" id="bugEmpty" hidden>Bu aralıkta seçili ekipten bug açılmamış.</div>
+  </div>
+
+  <div class="card grp-bug" id="bwCard" hidden>
+    <div class="chart-head">
+      <h2>Bug Retest Takibi</h2>
+      <span class="meta">üzerindeki açık bug'lar (assignee) · aralıkta statüsünü değiştirdiği bug</span>
+    </div>
+    <div id="bwList"></div>
+    <div class="state" id="bwEmpty" hidden>Ekibin üzerinde açık bug yok, aralıkta bug statüsü de değiştirilmemiş.</div>
+  </div>
+
+  <div class="card grp-run">
     <div class="chart-head">
       <h2>Kişi Bazında Koşum</h2>
       <div class="head-right">
-        <div class="legend" id="personLegend" hidden>
-          <span><span class="sw" style="background:var(--pass)"></span>Başarılı</span>
-          <span><span class="sw" style="background:var(--fail)"></span>Başarısız</span>
-          <span><span class="sw" style="background:var(--other)"></span>Diğer</span>
-        </div>
+        <div class="legend" id="personLegend" hidden></div>
         <button class="ghost" id="csv" hidden>CSV indir</button>
         <button class="ghost" id="pptx" hidden>PPTX indir</button>
         <span class="meta" id="chartMeta"></span>
@@ -313,6 +436,30 @@
     <div id="chart">
       <div class="state">Plan ve aralığı seçip <b>Getir</b>'e basın.</div>
     </div>
+  </div>
+
+  <div class="card grp-bug" id="btCard" hidden>
+    <div class="chart-head">
+      <h2>Bug Statü Süreleri</h2>
+      <span class="meta" id="btMeta">projede açılmış tüm bug'ların her statüde geçirdiği süre (changelog'dan)</span>
+    </div>
+    <div id="btBody"></div>
+  </div>
+
+  <div class="card grp-stock" id="stockCard" hidden>
+    <div class="chart-head">
+      <h2>Açık Bug Stoku</h2>
+      <span class="meta" id="stockMeta">projedeki çözülmemiş tüm bug'lar (tarih aralığından bağımsız)</span>
+    </div>
+    <div id="stockBody"></div>
+  </div>
+
+  <div class="card grp-run" id="peCard" hidden>
+    <div class="chart-head">
+      <h2>Kişi × Execution Detayı</h2>
+      <span class="meta">kişiye tıklayınca execution kırılımı açılır</span>
+    </div>
+    <div id="peList"></div>
   </div>
 
   <footer>Veriler Xray (Raven) REST API'sinden çekilir; yalnızca seçilen aralıkta <i>tamamlanmış</i> koşumlar sayılır. Sonuçlar 10 dk önbelleklenir.</footer>
@@ -328,6 +475,14 @@ let lastData = null;
 let autoTimer = null;
 
 function isoLocal(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function fmtInput(d) { return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear(); }
+function isoFromInput(v) {
+  v = (v || '').trim();
+  let m = v.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  return null;
+}
 function fmtDate(iso) { return new Date(iso + 'T00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }); }
 function fmtShort(iso) { return new Date(iso + 'T00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }); }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -340,14 +495,26 @@ function applyPreset() {
   let from = new Date(today), to = new Date(today);
   if (v === 'yesterday') { from.setDate(from.getDate() - 1); to = new Date(from); }
   else if (v !== 'today') { from.setDate(from.getDate() - (parseInt(v) - 1)); }
-  $('from').value = isoLocal(from);
-  $('to').value = isoLocal(to);
+  $('from').value = fmtInput(from);
+  $('to').value = fmtInput(to);
 }
 $('preset').addEventListener('change', applyPreset);
 applyPreset();
 
+
 const savedPlan = localStorage.getItem('xray-plan');
 if (savedPlan) $('plan').value = savedPlan;
+
+// görünüm sekmeleri (koşum / bug analizi)
+function setView(v) {
+  document.body.dataset.view = v;
+  localStorage.setItem('xray-view', v);
+  document.querySelectorAll('#viewTabs .vtab').forEach(b =>
+    b.classList.toggle('active', b.dataset.v === v));
+}
+document.querySelectorAll('#viewTabs .vtab').forEach(b =>
+  b.addEventListener('click', () => setView(b.dataset.v)));
+setView(localStorage.getItem('xray-view') || 'run');
 
 function showLogin(msg) {
   const err = $('loginErr');
@@ -394,7 +561,14 @@ $('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') submit
 
 async function checkStatus() {
   const chip = $('status'), txt = $('statusText');
-  if (demo) { chip.className = 'chip ok'; txt.textContent = 'Demo modu'; return; }
+  if (demo) {
+    chip.className = 'chip err'; txt.textContent = 'DEMO MODU — sahte veri';
+    const b = document.createElement('div');
+    b.style.cssText = 'background:color-mix(in srgb,var(--fail) 15%,transparent);color:var(--fail);border:1px solid var(--fail);border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:13px;font-weight:600;';
+    b.innerHTML = '⚠ Demo modundasınız — gösterilen veriler sahtedir. Gerçek veri için: <a href="/" style="color:inherit">' + location.origin + '</a>';
+    document.querySelector('.wrap').insertBefore(b, document.querySelector('.card'));
+    return;
+  }
   try {
     const s = await (await fetch('/api/status')).json();
     if (s.ok) {
@@ -437,16 +611,308 @@ function showTip(e, html) {
 }
 function hideTip() { tt.style.display = 'none'; }
 
+// Jira statülerine sabit renkler; bilinmeyen statüler yedek paletten sırayla alır
+const STATUS_COLORS = {
+  PASS: '#0ca30c', FAIL: '#d03b3b', TODO: '#898781',
+  EXECUTING: '#2a78d6', ABORTED: '#eb6834', BLOCKED: '#eda100',
+};
+const FALLBACK_COLORS = ['#1baf7a', '#9085e9', '#e87ba4', '#d95926', '#c98500', '#4a3aa7'];
+let colorMap = {};
+
+function buildColorMap(statusList) {
+  colorMap = {};
+  let fi = 0;
+  statusList.forEach(s => { colorMap[s] = STATUS_COLORS[s] || FALLBACK_COLORS[fi++ % FALLBACK_COLORS.length]; });
+}
+
+function legendHtml(statusList, totals) {
+  return statusList.map(s =>
+    `<span><span class="sw" style="background:${colorMap[s]}"></span>${esc(s)}${totals && totals[s] != null ? ' <b>' + totals[s] + '</b>' : ''}</span>`
+  ).join('');
+}
+
+// kişi × gün ısı haritası durumu
+let mxData = null, mxFilter = 'ALL';
+
+function renderMatrixFilter(statusList) {
+  $('matrixFilter').innerHTML = ['ALL', ...statusList].map(s =>
+    `<span class="fbtn${mxFilter === s ? ' active' : ''}" data-s="${esc(s)}"` +
+    (s !== 'ALL' ? ` style="${mxFilter === s ? '' : 'border-color:' + colorMap[s] + '55;'}"` : '') +
+    `>${s === 'ALL' ? 'Tümü' : esc(s)}</span>`).join('');
+  $('matrixFilter').querySelectorAll('.fbtn').forEach(b =>
+    b.addEventListener('click', () => {
+      mxFilter = b.dataset.s;
+      renderMatrixFilter(statusList);
+      renderMatrix();
+    }));
+}
+
+function renderMatrix() {
+  const data = mxData;
+  if (!data) return;
+  const pds = data.personDays || [];
+  const val = d => mxFilter === 'ALL' ? d.total : ((d.statuses || {})[mxFilter] || 0);
+  const heatColor = mxFilter === 'ALL' ? 'var(--series)' : colorMap[mxFilter];
+  const rows = pds.map((p, pi) => ({ p, pi, tot: p.days.reduce((s, d) => s + val(d), 0) }))
+    .sort((a, b) => b.tot - a.tot);
+  const maxCell = Math.max(1, ...pds.flatMap(p => p.days.map(val)));
+  const nd = data.days.length, mstep = Math.ceil(nd / 20);
+  let html = '<tr><th style="text-align:left">Kişi</th>' + data.days.map((d, i) =>
+    `<th>${(i % mstep === 0 || i === nd - 1) ? fmtShort(d.date) : ''}</th>`).join('') + '<th>Toplam</th></tr>';
+  html += rows.map(({ p, pi, tot }) => {
+    const cells = p.days.map((d, di) => {
+      const n = val(d);
+      const alpha = n ? Math.round(12 + 70 * n / maxCell) : 0;
+      return `<td class="cell${n ? '' : ' z'}" data-p="${pi}" data-d="${di}"` +
+        (n ? ` style="background:color-mix(in srgb, ${heatColor} ${alpha}%, transparent)"` : '') +
+        `>${n || '·'}</td>`;
+    }).join('');
+    return `<tr><td class="name" title="${esc(p.name)}">${esc(p.name)}</td>${cells}<td class="rowtot">${tot || '·'}</td></tr>`;
+  }).join('');
+  const dayTotals = data.days.map((_, di) => pds.reduce((s, p) => s + val(p.days[di]), 0));
+  html += '<tr><td class="name" style="color:var(--muted)">Tüm ekip</td>' +
+    dayTotals.map(n => `<td class="rowtot">${n || '·'}</td>`).join('') +
+    `<td class="rowtot">${dayTotals.reduce((a, b) => a + b, 0) || '·'}</td></tr>`;
+  $('matrix').innerHTML = html;
+  $('matrix').querySelectorAll('td.cell').forEach(td => {
+    const p = pds[+td.dataset.p], d = p.days[+td.dataset.d];
+    td.addEventListener('mousemove', e =>
+      showTip(e, `${esc(p.name)}<br>${fmtDate(d.date)} · <b>${d.total}</b> koşum${d.total ? '<br>' + statusTipRows(d) : ''}`));
+    td.addEventListener('mouseleave', hideTip);
+  });
+}
+
 function statusTipRows(o) {
-  return `<span class="tp">Başarılı: <b>${o.pass}</b></span><br>` +
-         `<span class="tf">Başarısız: <b>${o.fail}</b></span>` +
-         (o.other ? `<br><span class="tt-sub">Diğer: <b>${o.other}</b></span>` : '');
+  const st = o.statuses || {};
+  return Object.entries(st).sort((a, b) => b[1] - a[1]).map(([s, c]) =>
+    `<span style="color:${colorMap[s] || 'inherit'}">${esc(s)}: <b>${c}</b></span>`).join('<br>');
+}
+
+const kisa = n => (n || '').split(' - ')[0].split(' (')[0].trim();
+
+function fmtDur(h) {
+  if (h < 1) return Math.round(h * 60) + ' dk';
+  if (h < 48) return (h < 10 ? h.toFixed(1) : Math.round(h)) + ' sa';
+  return (h / 24).toFixed(1) + ' gün';
+}
+
+let lastBT = null;
+
+let lastStock = null;
+
+async function loadOpenBugs(plan) {
+  const card = $('stockCard'), body = $('stockBody');
+  card.hidden = false;
+  body.innerHTML = '<div class="state"><div class="spinner"></div>Açık bug\'lar çekiliyor…</div>';
+  try {
+    const qs = new URLSearchParams({ plan });
+    if (demo) qs.set('demo', '1');
+    const resp = await fetch('/api/openbugs?' + qs);
+    const ob = await resp.json();
+    if (!resp.ok || ob.error) {
+      body.innerHTML = `<div class="state error">${esc(ob.error || 'Hata')}</div>`;
+      return;
+    }
+    lastStock = ob;
+    if (!ob.count) {
+      body.innerHTML = '<div class="state">Projede açık bug yok 🎉</div>';
+      return;
+    }
+    const prioStr = Object.entries(ob.priorities || {}).map(([p, c]) => `${p}: ${c}`).join(' · ');
+    $('stockMeta').textContent = ob.count + " açık bug · 90+ gün: " + (ob.ages['90+'] || 0)
+      + ' · ' + prioStr;
+    const bar = (name, count, max, color) => `
+      <div class="row erow">
+        <div class="name" title="${esc(name)}">${esc(name)}</div>
+        <div class="track"><div class="seg" style="width:${(count / max * 100).toFixed(1)}%;background:${color}"></div></div>
+        <div class="num"><span class="pct">${count}</span></div>
+      </div>`;
+    let html = '<div class="bw-lbl" style="margin:2px 0 4px">Statü dağılımı:</div>';
+    const maxS = Math.max(1, ...ob.statuses.map(s => s.count));
+    html += ob.statuses.map(s => bar(s.name, s.count, maxS, 'var(--series)')).join('');
+    html += '<div class="bw-lbl" style="margin:12px 0 4px">Kişi bazında (atanan):</div>';
+    const maxA = Math.max(1, ...ob.assignees.map(a => a.count));
+    html += ob.assignees.map(a => bar(a.name, a.count, maxA, 'var(--fail)')).join('');
+    html += '<div class="bw-lbl" style="margin:12px 0 4px">Yaş dağılımı:</div>';
+    const ageOrder = ['90+', '30-90', '7-30', '<7'];
+    const maxY = Math.max(1, ...ageOrder.map(k => ob.ages[k] || 0));
+    html += ageOrder.map(k => bar(k + ' gün', ob.ages[k] || 0, maxY, '#eda100')).join('');
+    html += '<div class="bw-lbl" style="margin:12px 0 4px">En yaşlı 15 açık bug:</div>';
+    html += ob.list.slice(0, 15).map(b =>
+      `<div class="bw-lbl" style="font-size:12px;margin:2px 0">
+        <a href="https://jira.thy.com/browse/${esc(b.key)}" target="_blank" rel="noopener" style="color:var(--series);text-decoration:none;font-weight:600">${esc(b.key)}</a>
+        · <b style="color:var(--ink)">${b.ageDays}g</b> · ${esc(b.status)} · ${esc(b.assignee)} · ${esc(b.summary)}</div>`).join('');
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<div class="state error">Açık bug listesi alınamadı: ${esc(e.message)}</div>`;
+  }
+}
+
+// bug süre verisinden analiz maddeleri (Otomatik Analiz kartına eklenir)
+function btInsightItems(bt) {
+  const items = [];
+  if (!bt || !bt.statuses || !bt.statuses.length) return items;
+  const WAIT = ['OPEN', 'READY FOR DEVELOPMENT', 'READY TO TEST', 'ON HOLD',
+    'WAITING FOR INFORMATION', 'BACKLOG', 'READY FOR QA DEPLOYMENT', 'REJECTED'];
+  const top = bt.statuses[0];
+  items.push(['⏳', `Bug'lar en uzun <b>${esc(top.name)}</b> statüsünde kalıyor — ort <b>${fmtDur(top.avgHours)}</b> (${top.bugs} bug).`, 0]);
+  const allTot = bt.statuses.reduce((a, s) => a + s.totalHours, 0);
+  const waitTot = bt.statuses.filter(s => WAIT.includes(s.name.toUpperCase()))
+    .reduce((a, s) => a + s.totalHours, 0);
+  if (allTot > 0) {
+    const pct = Math.round(waitTot / allTot * 100);
+    if (pct >= 60)
+      items.push(['🚦', `Bug yaşam süresinin <b>%${pct}</b>'i bekleme kuyruklarında geçiyor — darboğaz geliştirme/test değil, sahiplenme ve kuyruklar.`, 1]);
+  }
+  const oldest = (bt.slowest || []).find(b => b.open);
+  if (oldest)
+    items.push(['🕰', `En yaşlı açık bug: <b>${esc(oldest.key)}</b> — <b>${fmtDur(oldest.hours)}</b>dir süreçte (şu an: ${esc(oldest.status)}).`,
+      oldest.hours > 336 ? 1 : 0]);
+  return items;
+}
+
+function appendBtInsights(bt) {
+  const list = $('insightList');
+  if ($('insightCard').hidden || !list) return;
+  list.querySelectorAll('li.bt').forEach(el => el.remove());
+  const extra = btInsightItems(bt);
+  if (extra.length)
+    list.insertAdjacentHTML('beforeend', extra.map(([ic, html, warn]) =>
+      `<li class="bt${warn ? ' warn' : ''}"><span class="ic">${ic}</span><span>${html}</span></li>`).join(''));
+}
+
+async function loadBugTimes(plan) {
+  const card = $('btCard'), body = $('btBody');
+  card.hidden = false;
+  body.innerHTML = '<div class="state"><div class="spinner"></div>Projedeki tüm bug\'ların changelog\'ları okunuyor…</div>';
+  try {
+    const qs = new URLSearchParams({ plan });
+    if (demo) qs.set('demo', '1');
+    const resp = await fetch('/api/bugtime?' + qs);
+    const bt = await resp.json();
+    if (!resp.ok || bt.error) {
+      body.innerHTML = `<div class="state error">${esc(bt.error || 'Hata')}</div>`;
+      return;
+    }
+    lastBT = bt;
+    if (!bt.count) {
+      body.innerHTML = '<div class="state">Bu aralıkta açılmış bug bulunamadı.</div>';
+      return;
+    }
+    appendBtInsights(bt);
+    $('btMeta').textContent = 'projedeki ' + (bt.capped ? bt.found + " bug'dan en yeni " + bt.count : bt.count + ' bug')
+      + ' incelendi · kapalı statüde sayaç durur';
+    const maxAvg = Math.max(1e-9, ...bt.statuses.map(s => s.avgHours));
+    let html = bt.statuses.map(s => `
+      <div class="row erow">
+        <div class="name" title="${esc(s.name)}">${esc(s.name)}</div>
+        <div class="track"><div class="seg" style="width:${(s.avgHours / maxAvg * 100).toFixed(1)}%;background:var(--series)"></div></div>
+        <div class="num"><span class="pct">${fmtDur(s.avgHours)}</span> <span class="cnt">ort · ${fmtDur(s.totalHours)} toplam · ${s.bugs} bug</span></div>
+      </div>`).join('');
+    if (bt.slowest && bt.slowest.length) {
+      html += '<div class="bw-lbl" style="margin:10px 0 4px">En uzun süredir süreçte olanlar:</div>';
+      html += bt.slowest.filter(b => b.open).slice(0, 5).map(b =>
+        `<div class="bw-lbl" style="font-size:12px;margin:2px 0">
+          <a href="https://jira.thy.com/browse/${esc(b.key)}" target="_blank" rel="noopener" style="color:var(--series);text-decoration:none;font-weight:600">${esc(b.key)}</a>
+          · <b style="color:var(--ink)">${fmtDur(b.hours)}</b> · şu an: ${esc(b.status)} · ${esc(b.summary)}</div>`).join('');
+    }
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<div class="state error">Bug süre analizi başarısız: ${esc(e.message)}</div>`;
+  }
+}
+
+function buildInsights(d) {
+  const out = [];
+  const st = d.statusTotals || {};
+  const bw = (d.bugWork && !d.bugWork.error && d.bugWork.people) ? d.bugWork.people : [];
+  const isClosed = s => ['KAPALI', 'CLOSED', 'DONE', 'RESOLVED', 'ÇÖZÜLDÜ'].includes(s.toUpperCase());
+  const isReopen = s => s.toUpperCase().includes('AÇILDI') || s.toUpperCase().includes('REOPEN');
+  const sumBy = fn => bw.reduce((t, p) => t + Object.entries(p.changedStatuses || {})
+    .filter(([k]) => fn(k)).reduce((a, [, c]) => a + c, 0), 0);
+  const totalChanged = bw.reduce((s, p) => s + p.changed, 0);
+  const closedCount = sumBy(isClosed);
+  const reopened = sumBy(isReopen);
+
+  // günün/aralığın karakteri
+  if (!d.total && !totalChanged) {
+    out.push(['ℹ️', 'Bu aralıkta kayda değer faaliyet bulunamadı.', 0]);
+    return out;
+  }
+  if (totalChanged > d.total) {
+    out.push(['🔁', `Ağırlık <b>bug retest</b>'te: <b>${totalChanged}</b> bug işlemi, buna karşılık <b>${d.total}</b> test koşumu` +
+      (closedCount ? ` — <b>${closedCount}</b> bug kapatıldı` : '') + '.', 0]);
+  } else {
+    out.push(['🧪', `Ağırlık test koşumunda: <b>${d.total}</b> koşum` +
+      (totalChanged ? ` (yanında ${totalChanged} bug işlemi)` : '') + '.', 0]);
+  }
+
+  // koşum kalitesi
+  if (d.total) {
+    const pr = Math.round((st.PASS || 0) / d.total * 100);
+    let s = `Koşumların <b>%${pr}</b>'i PASS`;
+    if (st.FAIL) s += `; <b>${st.FAIL} FAIL</b>`;
+    if (st.BLOCKED) s += `; <b>${st.BLOCKED} BLOCKED</b>`;
+    out.push(['✅', s + '.', 0]);
+    if ((st.BLOCKED || 0) / d.total > 0.2)
+      out.push(['⛔', `BLOCKED oranı yüksek (<b>%${Math.round(st.BLOCKED / d.total * 100)}</b>) — ortam/veri engeli olabilir, exec listesinde bloke yoğun kayıtlara bakın.`, 1]);
+  }
+
+  // kişiler ve zamanlama
+  if (d.people && d.people.length && d.total) {
+    const top = d.people[0];
+    out.push(['🏃', `En çok koşan: <b>${esc(kisa(top.name))}</b> (${top.total} koşum); aralıkta <b>${d.people.length}</b> kişi test koştu.`, 0]);
+  }
+  const ph = d.hourTotals || [];
+  if (ph.some(v => v)) {
+    const peakH = ph.indexOf(Math.max(...ph));
+    const peak = (d.days || []).reduce((a, b) => (b.total > a.total ? b : a), { total: 0 });
+    let s = `Saat zirvesi <b>${String(peakH).padStart(2, '0')}:00</b> (${ph[peakH]} koşum)`;
+    if (d.days.length > 1 && peak.total) s += `; en yoğun gün <b>${fmtShort(peak.date)}</b> (${peak.total})`;
+    if (peakH >= 19 || peakH <= 5) s += ' — mesai dışı yoğunluk, muhtemelen otomasyon koşumu';
+    out.push(['🕐', s + '.', 0]);
+  }
+
+  // bug açma
+  if (d.bugs && !d.bugs.error && d.bugs.total) {
+    const tb = d.bugs.personDays.find(p => p.total);
+    out.push(['🐛', `<b>${d.bugs.total}</b> yeni bug açıldı` + (tb ? ` — en çok: <b>${esc(kisa(tb.name))}</b> (${tb.total})` : '') + '.', 0]);
+  }
+
+  // retest lideri + yeniden açılanlar
+  if (totalChanged) {
+    const topR = [...bw].sort((a, b) => b.changed - a.changed)[0];
+    let s = `Retest lideri: <b>${esc(kisa(topR.name))}</b> (${topR.changed} işlem)`;
+    s += reopened ? `. <b>${reopened}</b> bug retest sonrası <b>yeniden açıldı</b>.` : '. Yeniden açılan yok — temiz kapanış.';
+    out.push(['🔧', s, reopened ? 1 : 0]);
+  }
+
+  // biriken kuyruk uyarısı
+  const idle = bw.filter(p => p.open >= 5 && !p.changed).sort((a, b) => b.open - a.open);
+  idle.slice(0, 2).forEach(p =>
+    out.push(['⚠️', `<b>${esc(kisa(p.name))}</b> üzerinde <b>${p.open}</b> açık bug birikmiş, bu aralıkta hiç işlem görünmüyor.`, 1]));
+
+  // execution durumu
+  const ep = d.execProgress || [];
+  const near = ep.filter(e => e.total && e.todo && e.done / e.total >= 0.9);
+  if (near.length)
+    out.push(['🏁', `<b>${near.length}</b> execution bitmeye çok yakın: ` +
+      near.slice(0, 3).map(e => `${esc(e.key)} (%${Math.round(e.done / e.total * 100)})`).join(', ') +
+      (near.length > 3 ? '…' : '') + '.', 0]);
+  const stalled = ep.filter(e => e.total >= 300 && e.done > 0 && e.done / e.total < 0.1);
+  if (stalled.length)
+    out.push(['🐌', `<b>${stalled.length}</b> büyük execution başlamış ama %10'un altında duruyor: ` +
+      stalled.slice(0, 3).map(e => esc(e.key)).join(', ') + (stalled.length > 3 ? '…' : '') + '.', 0]);
+
+  return out;
 }
 
 function render(data) {
   lastData = data;
   const singleDay = data.from === data.to;
   const rangeText = singleDay ? fmtDate(data.from) : fmtDate(data.from) + ' – ' + fmtDate(data.to);
+  const statusList = data.statusList || [];
+  buildColorMap(statusList);
 
   // kartlar
   $('tiles').hidden = false;
@@ -456,7 +922,20 @@ function render(data) {
   $('tPassPct').textContent = data.total ? '%' + Math.round(data.passCount / data.total * 100) : '';
   $('tFail').textContent = data.failCount;
   $('tFailPct').textContent = data.total ? '%' + Math.round(data.failCount / data.total * 100) : '';
+  $('statusTiles').innerHTML = statusList.filter(s => s !== 'PASS' && s !== 'FAIL').map(s =>
+    `<div class="card tile">
+      <div class="label"><span class="dot" style="background:${colorMap[s]}"></span>${esc(s)}</div>
+      <div class="value">${(data.statusTotals || {})[s] || 0}</div>
+      <div class="note">${data.total ? '%' + Math.round(((data.statusTotals || {})[s] || 0) / data.total * 100) : ''}</div>
+    </div>`).join('');
   $('tPeople').textContent = data.people.length;
+
+  const activeDays = data.days.filter(d => d.total > 0);
+  $('tAvg').textContent = activeDays.length ? Math.round(data.total / activeDays.length) : '–';
+  $('tAvgNote').textContent = activeDays.length ? activeDays.length + ' aktif günde' : '';
+  const peak = data.days.reduce((a, b) => (b.total > a.total ? b : a), { total: 0 });
+  $('tPeak').textContent = peak.total || '–';
+  $('tPeakNote').textContent = peak.total ? fmtShort(peak.date) + ' · koşum' : '';
 
   const pr = data.progress;
   if (pr && pr.total) {
@@ -470,6 +949,171 @@ function render(data) {
     $('tProg').textContent = '–';
     $('progFill').style.width = '0%';
     $('tProgNote').textContent = 'plan testi bulunamadı';
+  }
+
+  $('viewTabs').hidden = false;
+
+  // otomatik analiz
+  const insights = buildInsights(data);
+  $('insightCard').hidden = !insights.length;
+  $('insightMeta').textContent = data.plan + ' · ' + rangeText;
+  $('insightList').innerHTML = insights.map(([ic, html, warn]) =>
+    `<li${warn ? ' class="warn"' : ''}><span class="ic">${ic}</span><span>${html}</span></li>`).join('');
+
+  // plan bazında ilerleme (birden fazla plan seçilince)
+  const perPlan = (data.progress && data.progress.perPlan) || [];
+  $('planCard').hidden = perPlan.length < 2;
+  if (perPlan.length >= 2) {
+    $('planList2').innerHTML = perPlan.map(p => {
+      const pct = p.total ? Math.round(p.done / p.total * 100) : 0;
+      return `<div class="row erow">
+        <div class="name"><a href="https://jira.thy.com/browse/${esc(p.plan)}" target="_blank" rel="noopener">${esc(p.plan)}</a></div>
+        <div class="track"><div class="seg" style="width:${p.total ? (p.done / p.total * 100).toFixed(1) : 0}%;background:var(--series)"></div></div>
+        <div class="num"><span class="pct">%${pct}</span> <span class="cnt">· ${p.done}/${p.total}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  // saatlik ısı haritası
+  const phs = data.personHours || [];
+  const ht = data.hourTotals || [];
+  $('hourCard').hidden = !phs.length || !ht.some(v => v > 0);
+  if (!$('hourCard').hidden) {
+    let lo = ht.findIndex(v => v > 0);
+    let hi = ht.length - 1;
+    while (hi >= 0 && !ht[hi]) hi--;
+    const hoursIdx = [];
+    for (let h = lo; h <= hi; h++) hoursIdx.push(h);
+    const hh = h => String(h).padStart(2, '0');
+    const maxCell = Math.max(1, ...phs.flatMap(p => hoursIdx.map(h => p.hours[h])));
+    let html = '<tr><th style="text-align:left">Kişi</th>' +
+      hoursIdx.map(h => `<th>${hh(h)}</th>`).join('') + '<th>Toplam</th></tr>';
+    html += phs.map((p, pi) => {
+      const cells = hoursIdx.map(h => {
+        const n = p.hours[h];
+        const alpha = n ? Math.round(12 + 70 * n / maxCell) : 0;
+        return `<td class="cell${n ? '' : ' z'}" data-p="${pi}" data-h="${h}"` +
+          (n ? ` style="background:color-mix(in srgb, var(--series) ${alpha}%, transparent)"` : '') +
+          `>${n || '·'}</td>`;
+      }).join('');
+      return `<tr><td class="name" title="${esc(p.name)}">${esc(p.name)}</td>${cells}<td class="rowtot">${p.total}</td></tr>`;
+    }).join('');
+    html += '<tr><td class="name" style="color:var(--muted)">Tüm ekip</td>' +
+      hoursIdx.map(h => `<td class="rowtot">${ht[h] || '·'}</td>`).join('') +
+      `<td class="rowtot">${ht.reduce((a, b) => a + b, 0)}</td></tr>`;
+    $('hourMatrix').innerHTML = html;
+    $('hourMatrix').querySelectorAll('td.cell').forEach(td => {
+      const p = phs[+td.dataset.p], h = +td.dataset.h;
+      td.addEventListener('mousemove', e =>
+        showTip(e, `${esc(p.name)}<br>${hh(h)}:00–${hh(h)}:59 · <b>${p.hours[h]}</b> koşum`));
+      td.addEventListener('mouseleave', hideTip);
+    });
+  }
+
+  // açılan bug matrisi
+  const bugs = data.bugs || null;
+  $('tBugs').textContent = bugs && !bugs.error ? bugs.total : '–';
+  $('bugCard').hidden = !bugs;
+  if (bugs) {
+    if (bugs.error) {
+      $('bugMatrix').innerHTML = '';
+      $('bugEmpty').hidden = false;
+      $('bugEmpty').textContent = 'Bug sorgusu başarısız: ' + bugs.error;
+    } else {
+      const bp = (bugs.personDays || []).filter(p => p.total > 0);
+      $('bugEmpty').hidden = !!bp.length;
+      $('bugEmpty').textContent = 'Bu aralıkta seçili ekipten bug açılmamış.';
+      if (!bp.length) { $('bugMatrix').innerHTML = ''; }
+      else {
+        const maxB = Math.max(1, ...bp.flatMap(p => p.days.map(d => d.total)));
+        const nb = data.days.length, bstep = Math.ceil(nb / 20);
+        let html = '<tr><th style="text-align:left">Kişi</th>' + bugs.perDay.map((d, i) =>
+          `<th>${(i % bstep === 0 || i === nb - 1) ? fmtShort(d.date) : ''}</th>`).join('') + '<th>Toplam</th></tr>';
+        html += bp.map((p, pi) => {
+          const cells = p.days.map((d, di) => {
+            const alpha = d.total ? Math.round(15 + 65 * d.total / maxB) : 0;
+            return `<td class="cell${d.total ? '' : ' z'}" data-p="${pi}" data-d="${di}"` +
+              (d.total ? ` style="background:color-mix(in srgb, var(--fail) ${alpha}%, transparent)"` : '') +
+              `>${d.total || '·'}</td>`;
+          }).join('');
+          return `<tr><td class="name" title="${esc(p.name)}">${esc(p.name)}</td>${cells}<td class="rowtot">${p.total}</td></tr>`;
+        }).join('');
+        html += '<tr><td class="name" style="color:var(--muted)">Tüm ekip</td>' +
+          bugs.perDay.map(d => `<td class="rowtot">${d.total || '·'}</td>`).join('') +
+          `<td class="rowtot">${bugs.total}</td></tr>`;
+        $('bugMatrix').innerHTML = html;
+        $('bugMatrix').querySelectorAll('td.cell').forEach(td => {
+          const p = bp[+td.dataset.p], d = p.days[+td.dataset.d];
+          td.addEventListener('mousemove', e =>
+            showTip(e, `${esc(p.name)}<br>${fmtDate(d.date)} · <b>${d.total}</b> bug`));
+          td.addEventListener('mouseleave', hideTip);
+        });
+      }
+    }
+  }
+
+  // bug retest takibi
+  const bw = data.bugWork || null;
+  $('bwCard').hidden = !bw;
+  if (bw) {
+    if (bw.error) {
+      $('bwList').innerHTML = '';
+      $('bwEmpty').hidden = false;
+      $('bwEmpty').textContent = 'Retest sorgusu başarısız: ' + bw.error;
+    } else {
+      const bwRows = (bw.people || []).filter(p => p.open || p.changed);
+      $('bwEmpty').hidden = !!bwRows.length;
+      $('bwEmpty').textContent = 'Ekibin üzerinde açık bug yok, aralıkta bug statüsü de değiştirilmemiş.';
+      const chipRow = (obj, cls) => Object.entries(obj || {}).filter(([, c]) => c > 0)
+        .sort((a, b) => b[1] - a[1])
+        .map(([s, c]) => `<span class="bw-chip${cls ? ' ' + cls : ''}">${esc(s)} <b>${c}</b></span>`).join('');
+      $('bwList').innerHTML = bwRows.map(p => {
+        const openChips = chipRow(p.openStatuses);
+        const changedChips = chipRow(p.changedStatuses, 'done');
+        return `<div class="row erow bw-row">
+          <div class="name" title="${esc(p.name)}">${esc(p.name)}</div>
+          <div class="bw-mid">
+            <div><span class="bw-lbl">üzerinde:</span> ${openChips || '<span class="bw-lbl">açık bug yok</span>'}</div>
+            ${changedChips ? `<div style="margin-top:3px"><span class="bw-lbl">işlem gördü → şu an:</span> ${changedChips}</div>` : ''}
+          </div>
+          <div class="num"><span class="pct">${p.open}</span> <span class="cnt">açık · ${p.changed} işlem</span></div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // kişi × execution akordeonu
+  const pes = data.personExecs || [];
+  $('peCard').hidden = !pes.length;
+  if (pes.length) {
+    $('peList').innerHTML = pes.map((p, pi) => {
+      const maxE = Math.max(1, ...p.execs.map(e => e.total));
+      const rows = p.execs.map((e, ei) => {
+        const segs = statusList.filter(s => (e.statuses || {})[s])
+          .map(s => `<div class="seg" style="width:${(e.statuses[s] / maxE * 100).toFixed(1)}%;background:${colorMap[s]}"></div>`)
+          .join('');
+        return `<div class="row erow pe-row" data-p="${pi}" data-e="${ei}">
+          <div class="name"><a href="https://jira.thy.com/browse/${esc(e.key)}" target="_blank" rel="noopener">${esc(e.key)}</a>${e.summary ? ' · ' + esc(e.summary) : ''}</div>
+          <div class="track">${segs}</div>
+          <div class="num"><span class="pct">${e.total}</span> <span class="cnt">· %${Math.round(e.total / p.total * 100)}</span></div>
+        </div>`;
+      }).join('');
+      return `<div class="pe-person" data-i="${pi}">
+        <div class="pe-head">
+          <span class="pname"><span class="arrow">▶</span>${esc(p.name)}</span>
+          <span class="psum">${p.total} koşum · ${p.execs.length} execution</span>
+        </div>
+        <div class="pe-body">${rows}</div>
+      </div>`;
+    }).join('');
+    $('peList').querySelectorAll('.pe-head').forEach(h =>
+      h.addEventListener('click', () => h.parentElement.classList.toggle('open')));
+    $('peList').querySelectorAll('.pe-row').forEach(row => {
+      const e = pes[+row.dataset.p].execs[+row.dataset.e];
+      row.addEventListener('mousemove', ev =>
+        showTip(ev, `<b>${esc(e.key)}</b>${e.plan ? ' <span class="tt-sub">· ' + esc(e.plan) + '</span>' : ''}${e.summary ? '<br>' + esc(e.summary) : ''}<br><b>${e.total}</b> koşum<br>${statusTipRows(e)}`));
+      row.addEventListener('mouseleave', hideTip);
+    });
   }
 
   // execution ilerlemesi
@@ -495,24 +1139,23 @@ function render(data) {
     $('execList').querySelectorAll('.erow').forEach(row => {
       const e = execs[+row.dataset.i];
       row.addEventListener('mousemove', ev =>
-        showTip(ev, `<b>${esc(e.key)}</b>${e.summary ? '<br>' + esc(e.summary) : ''}<br>` +
-          `Koşulan: <b>${e.done}</b>/${e.total}<br>${statusTipRows(e)}` +
-          `<br><span class="tt-sub">Bekleyen: <b>${e.todo}</b></span>`));
+        showTip(ev, `<b>${esc(e.key)}</b>${e.plan ? ' <span class="tt-sub">· ' + esc(e.plan) + '</span>' : ''}${e.summary ? '<br>' + esc(e.summary) : ''}<br>` +
+          `Koşulan: <b>${e.done}</b>/${e.total}<br>${statusTipRows(e)}`));
       row.addEventListener('mouseleave', hideTip);
     });
   }
 
-  // trend (tek günde gizli)
+  // trend (tek günde gizli) — statü bazlı yığılmış sütunlar
   $('trendCard').hidden = singleDay;
   if (!singleDay) {
+    $('legendTrend').innerHTML = legendHtml(statusList, data.statusTotals);
     const max = Math.max(1, ...data.days.map(d => d.total));
     $('trend').innerHTML = data.days.map((d, i) => {
-      const h = cls => (d[cls] / max * 100).toFixed(1);
-      return `<div class="tcol" data-i="${i}">
-        ${d.other ? `<div class="tseg other" style="height:${h('other')}%"></div>` : ''}
-        ${d.fail ? `<div class="tseg fail" style="height:${h('fail')}%"></div>` : ''}
-        ${d.pass ? `<div class="tseg pass" style="height:${h('pass')}%"></div>` : ''}
-      </div>`;
+      const segs = [...statusList].reverse()
+        .filter(s => (d.statuses || {})[s])
+        .map(s => `<div class="tseg" style="height:${(d.statuses[s] / max * 100).toFixed(1)}%;background:${colorMap[s]}"></div>`)
+        .join('');
+      return `<div class="tcol" data-i="${i}">${segs}</div>`;
     }).join('');
     const n = data.days.length, step = Math.ceil(n / 12);
     $('trendLabels').innerHTML = data.days.map((d, i) =>
@@ -523,6 +1166,15 @@ function render(data) {
         showTip(e, `${fmtDate(d.date)}<br><b>${d.total}</b> koşum<br>${statusTipRows(d)}`));
       col.addEventListener('mouseleave', hideTip);
     });
+  }
+
+  // kişi × gün ısı haritası (statü filtreli)
+  mxData = data;
+  if (mxFilter !== 'ALL' && !statusList.includes(mxFilter)) mxFilter = 'ALL';
+  $('matrixCard').hidden = singleDay || !(data.personDays || []).length;
+  if (!$('matrixCard').hidden) {
+    renderMatrixFilter(statusList);
+    renderMatrix();
   }
 
   // kişi barları
@@ -536,16 +1188,15 @@ function render(data) {
     $('csv').hidden = true;
     return;
   }
+  $('personLegend').innerHTML = legendHtml(statusList);
   const maxP = data.people[0].total;
   chart.innerHTML = data.people.map((p, i) => {
-    const w = cls => (p[cls] / maxP * 100).toFixed(1);
+    const segs = statusList.filter(s => (p.statuses || {})[s])
+      .map(s => `<div class="seg" style="width:${(p.statuses[s] / maxP * 100).toFixed(1)}%;background:${colorMap[s]}"></div>`)
+      .join('');
     return `<div class="row" data-i="${i}">
       <div class="name" title="${esc(p.name)}">${esc(p.name)}</div>
-      <div class="track">
-        ${p.pass ? `<div class="seg pass" style="width:${w('pass')}%"></div>` : ''}
-        ${p.fail ? `<div class="seg fail" style="width:${w('fail')}%"></div>` : ''}
-        ${p.other ? `<div class="seg other" style="width:${w('other')}%"></div>` : ''}
-      </div>
+      <div class="track">${segs}</div>
       <div class="num">${p.total}</div>
     </div>`;
   }).join('');
@@ -565,18 +1216,33 @@ function scheduleAuto() {
 async function load(opts = {}) {
   const plan = $('plan').value.trim();
   if (!plan) return;
+  const fromIso = isoFromInput($('from').value), toIso = isoFromInput($('to').value);
+  if (!fromIso || !toIso) {
+    $('chart').innerHTML = '<div class="state error">Tarih biçimi anlaşılamadı — gg.aa.yyyy şeklinde yazın (örn. 15.07.2026).</div>';
+    return;
+  }
   localStorage.setItem('xray-plan', plan);
-  $('go').disabled = true;
+  if (!opts.silent) $('go').disabled = true;
   if (!opts.silent) {
-    $('chart').innerHTML = '<div class="state"><div class="spinner"></div>Execution\'lar taranıyor… (plan büyükse 1-2 dk sürebilir)</div>';
+    $('chart').innerHTML = '<div class="state"><div class="spinner"></div>' +
+      (opts.full ? 'Tam tarama — tüm execution\'lar baştan taranıyor…'
+                 : 'Execution\'lar taranıyor… (değişmeyenler önbellekten gelir)') + '</div>';
   } else {
     $('refreshNote').textContent = 'Arka planda yenileniyor…';
   }
   try {
-    const qs = new URLSearchParams({ plan, from: $('from').value, to: $('to').value });
+    const qs = new URLSearchParams({ plan, from: fromIso, to: toIso });
     if (demo) qs.set('demo', '1');
     if (opts.refresh) qs.set('refresh', '1');
-    const resp = await fetch('/api/runs?' + qs);
+    if (opts.full) qs.set('full', '1');
+    const ctrl = new AbortController();
+    const abortTimer = setTimeout(() => ctrl.abort(), 15 * 60 * 1000);
+    let resp;
+    try {
+      resp = await fetch('/api/runs?' + qs, { signal: ctrl.signal });
+    } finally {
+      clearTimeout(abortTimer);
+    }
     const data = await resp.json();
     if (!resp.ok) {
       if (!opts.silent) {
@@ -585,37 +1251,109 @@ async function load(opts = {}) {
       return;
     }
     render(data);
+    const ec = data.execCache;
     $('refreshNote').textContent = 'Son güncelleme: ' + data.generatedAt
-      + (data.cached ? ' (önbellekten)' : '') + ' · 10 dk\'da bir otomatik yenilenir';
+      + (data.cached ? ' (önbellekten)' : '') + ' · 10 dk\'da bir otomatik yenilenir'
+      + (ec ? ` · execution: ${ec.hits} önbellek + ${ec.scanned} tarama` : '')
+      + (data.teamSize ? ` · izlenen ekip: ${data.teamSize} kişi` : '')
+      + ((data.notes && data.notes.length) ? ' · ⚠ ' + data.notes.join(' · ') : '');
+    if (!opts.silent) { loadBugTimes(plan); loadOpenBugs(plan); }
+    if (data.stale && !opts.refresh && !opts.full && !demo) {
+      $('refreshNote').textContent = '💾 Kayıtlı veri gösteriliyor (' + (data.cachedAt || 'önceki oturum')
+        + ') — güncel veri arka planda çekiliyor…';
+      load({ silent: true, refresh: true, fromStale: true, staleAt: data.cachedAt });
+    }
     scheduleAuto();
   } catch (e) {
-    if (!opts.silent) $('chart').innerHTML = `<div class="state error">İstek başarısız: ${esc(e.message)}</div>`;
-    else $('refreshNote').textContent = 'Otomatik yenileme başarısız — tekrar denenecek';
+    const msg = e.name === 'AbortError'
+      ? 'istek zaman aşımına uğradı — sunucu yanıt vermiyor olabilir, calistir ile yeniden başlatın'
+      : e.message;
+    if (opts.fromStale) {
+      $('refreshNote').textContent = '💾 Kayıtlı veri gösteriliyor (' + (opts.staleAt || 'önceki oturum')
+        + ') — ⚠ güncelleme başarısız: ' + msg;
+    } else if (!opts.silent) {
+      $('chart').innerHTML = `<div class="state error">İstek başarısız: ${esc(msg)}</div>`;
+    } else {
+      $('refreshNote').textContent = 'Otomatik yenileme başarısız — tekrar denenecek';
+    }
   } finally {
-    $('go').disabled = false;
+    if (!opts.silent) $('go').disabled = false;
     if (opts.silent) scheduleAuto();
   }
 }
 
 $('csv').addEventListener('click', () => {
   if (!lastData) return;
-  const rows = [['Kişi', 'Toplam', 'Başarılı', 'Başarısız', 'Diğer']];
-  lastData.people.forEach(p => rows.push([p.name, p.total, p.pass, p.fail, p.other]));
+  const sl = lastData.statusList || [];
+  const stCols = o => sl.map(s => (o.statuses || {})[s] || 0);
+  const rows = [['Kişi', 'Toplam', ...sl]];
+  lastData.people.forEach(p => rows.push([p.name, p.total, ...stCols(p)]));
   rows.push([]);
-  rows.push(['Tarih', 'Toplam', 'Başarılı', 'Başarısız', 'Diğer']);
-  lastData.days.forEach(d => rows.push([d.date, d.total, d.pass, d.fail, d.other]));
+  rows.push(['Tarih', 'Toplam', ...sl]);
+  lastData.days.forEach(d => rows.push([d.date, d.total, ...stCols(d)]));
+  if (lastData.personDays && lastData.personDays.length) {
+    rows.push([]);
+    rows.push(['Kişi \\ Gün', ...lastData.days.map(d => d.date), 'Toplam']);
+    lastData.personDays.forEach(p => rows.push([
+      p.name, ...p.days.map(d => d.total), p.days.reduce((s, d) => s + d.total, 0),
+    ]));
+  }
+  if (lastData.personHours && lastData.personHours.length) {
+    rows.push([]);
+    rows.push(['Kişi \\ Saat', ...Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0')), 'Toplam']);
+    lastData.personHours.forEach(p => rows.push([p.name, ...p.hours, p.total]));
+  }
+  if (lastData.bugs && !lastData.bugs.error && lastData.bugs.total) {
+    rows.push([]);
+    rows.push(['Bug (Kişi \\ Gün)', ...lastData.days.map(d => d.date), 'Toplam']);
+    lastData.bugs.personDays.filter(p => p.total > 0).forEach(p => rows.push([
+      p.name, ...p.days.map(d => d.total), p.total,
+    ]));
+  }
+  if (lastData.bugWork && lastData.bugWork.people && lastData.bugWork.people.length) {
+    rows.push([]);
+    rows.push(['Kişi', 'Üzerindeki Açık Bug', 'Açık Bug Statüleri', 'Aralıkta Statü Değiştirdiği Bug', 'İşlem Gören Bugların Son Statüleri']);
+    lastData.bugWork.people.forEach(p => rows.push([
+      p.name, p.open,
+      Object.entries(p.openStatuses || {}).map(([s, c]) => s + ': ' + c).join(', '),
+      p.changed,
+      Object.entries(p.changedStatuses || {}).map(([s, c]) => s + ': ' + c).join(', '),
+    ]));
+  }
+  if (lastData.personExecs && lastData.personExecs.length) {
+    rows.push([]);
+    rows.push(['Kişi', 'Execution', 'Özet', 'Koşum', ...sl]);
+    lastData.personExecs.forEach(p => p.execs.forEach(e =>
+      rows.push([p.name, e.key, e.summary, e.total, ...stCols(e)])));
+  }
   if (lastData.execProgress && lastData.execProgress.length) {
     rows.push([]);
-    rows.push(['Execution', 'Özet', 'Toplam Test', 'Koşulan', 'Başarılı', 'Başarısız', 'Diğer', 'Bekleyen', 'İlerleme %']);
+    rows.push(['Execution', 'Plan', 'Özet', 'Toplam Test', 'Koşulan', 'Başarılı', 'Başarısız', 'Diğer', 'Bekleyen', 'İlerleme %']);
     lastData.execProgress.forEach(e => rows.push([
-      e.key, e.summary, e.total, e.done, e.pass, e.fail, e.other, e.todo,
+      e.key, e.plan || '', e.summary, e.total, e.done, e.pass, e.fail, e.other, e.todo,
       e.total ? Math.round(e.done / e.total * 100) : 0,
     ]));
+  }
+  if (lastBT && lastBT.statuses && lastBT.statuses.length) {
+    rows.push([]);
+    rows.push(['Bug Statüsü', 'Ortalama Süre (saat)', 'Toplam Süre (saat)', 'Bug Sayısı']);
+    lastBT.statuses.forEach(s => rows.push([s.name, s.avgHours.toFixed(1), s.totalHours.toFixed(1), s.bugs]));
+  }
+  if (lastStock && lastStock.list && lastStock.list.length) {
+    rows.push([]);
+    rows.push(['Açık Bug', 'Özet', 'Statü', 'Atanan', 'Öncelik', 'Açılış', 'Yaş (gün)']);
+    lastStock.list.forEach(b => rows.push([b.key, b.summary, b.status, b.assignee, b.priority, b.created, b.ageDays]));
+  }
+  const insightsCsv = buildInsights(lastData).concat(btInsightItems(lastBT));
+  if (insightsCsv.length) {
+    rows.push([]);
+    rows.push(['Otomatik Analiz']);
+    insightsCsv.forEach(([, html]) => rows.push([html.replace(/<[^>]+>/g, '')]));
   }
   const csv = '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = `xray-${lastData.plan}-${lastData.from}_${lastData.to}.csv`;
+  a.download = `xray-${lastData.plan.replace(/[^\w.-]+/g, '_')}-${lastData.from}_${lastData.to}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 });
@@ -628,6 +1366,7 @@ $('pptx').addEventListener('click', () => {
 });
 
 $('go').addEventListener('click', () => load());
+$('fullScan').addEventListener('click', () => load({ full: true }));
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.controls')) load(); });
 checkStatus();
 loadPlans();

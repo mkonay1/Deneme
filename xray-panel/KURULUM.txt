@@ -48,6 +48,13 @@ NOTLAR
   ve secim tarayicida hatirlanir.
 - Ilk sorgu plani bastan tarar (~1-2 dk). Sonuclar 10 dk onbelleklenir ve
   panel acikken 10 dakikada bir kendini yeniler.
+- Sorgu sonuclari results_cache.json dosyasina yazilir: sunucu kapanip
+  acilsa bile son gorunum aninda geri gelir; kayit eskiyse panel once onu
+  gosterir, guncel veriyi arka planda ceker.
+- Execution verileri exec_cache.json dosyasinda kalici olarak saklanir;
+  sonraki sorgularda yalnizca degisen (updated damgasi farkli) veya hala
+  aktif (bekleyen testi olan) execution'lar yeniden taranir. "Tam tarama"
+  dugmesi onbellegi yok sayip her seyi bastan tarar.
 - Port degistirmek icin: PORT ortam degiskeni (varsayilan 8765).
 - Farkli Jira icin: JIRA_BASE ortam degiskeni.
 - Deneme icin gercek veriye baglanmadan: http://localhost:8765/?demo=1
@@ -61,3 +68,5 @@ calistir.bat         Windows baslatici
 calistir.command     macOS/Linux baslatici
 pptx_kur_offline.bat python-pptx offline kurulum (Windows)
 wheels/              Offline kurulum paketleri (Win64 / Py3.12)
+exec_cache.json      Execution onbellegi (otomatik olusur; silinebilir)
+results_cache.json   Sorgu sonucu onbellegi (otomatik olusur; silinebilir)
